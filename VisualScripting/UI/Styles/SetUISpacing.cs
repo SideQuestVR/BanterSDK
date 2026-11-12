@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Spacing")]
     [UnitShortTitle("Set UI Spacing")]
-    [UnitCategory("Banter\\UI\\Styles\\Spacing")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Spacing")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUISpacing : Unit
     {
         [DoNotSerialize]
@@ -55,7 +54,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -84,13 +84,13 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUISpacing] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set margin properties
                     SendStyleCommand(panelId, elemId, "margin-top", FormatLength(mTop, unitVal));
                     SendStyleCommand(panelId, elemId, "margin-right", FormatLength(mRight, unitVal));
                     SendStyleCommand(panelId, elemId, "margin-bottom", FormatLength(mBottom, unitVal));
                     SendStyleCommand(panelId, elemId, "margin-left", FormatLength(mLeft, unitVal));
-                    
+
                     // Set padding properties
                     SendStyleCommand(panelId, elemId, "padding-top", FormatLength(pTop, unitVal));
                     SendStyleCommand(panelId, elemId, "padding-right", FormatLength(pRight, unitVal));
@@ -129,14 +129,13 @@ namespace Banter.VisualScripting
         {
             return unit switch
             {
-                LengthUnit.Pixel => $"{value}px",
-                LengthUnit.Percent => $"{value}%",
-                LengthUnit.Em => $"{value}em",
-                LengthUnit.Rem => $"{value}rem",
+                LengthUnit.Pixel => $"{NumberFormat.Format(value)}px",
+                LengthUnit.Percent => $"{NumberFormat.Format(value)}%",
+                LengthUnit.Em => $"{NumberFormat.Format(value)}em",
+                LengthUnit.Rem => $"{NumberFormat.Format(value)}rem",
                 LengthUnit.Auto => "auto",
-                _ => $"{value}px"
+                _ => $"{NumberFormat.Format(value)}px"
             };
         }
     }
 }
-#endif

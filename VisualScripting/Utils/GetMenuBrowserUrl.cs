@@ -1,11 +1,10 @@
-#if BANTER_VISUAL_SCRIPTING
 using System;
 using System.Reflection;
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     /// <summary>
     /// Visual Scripting node that gets the current URL of the menu browser.
@@ -15,8 +14,8 @@ namespace Banter.VisualScripting
     /// </summary>
     [UnitTitle("Get Menu Browser URL")]
     [UnitShortTitle("Menu Browser URL")]
-    [UnitCategory("Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Browser")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetMenuBrowserUrl : Unit
     {
         [DoNotSerialize]
@@ -24,7 +23,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            url = ValueOutput<string>("URL", flow => {
+            url = ValueOutput<string>("URL", flow =>
+            {
                 try
                 {
                     // Use reflection to find MenuBrowserMessager without compile-time reference
@@ -35,7 +35,7 @@ namespace Banter.VisualScripting
                     }
 
                     // Find instance of MenuBrowserMessager
-                    var menuBrowserMessager = UnityEngine.Object.FindObjectOfType(menuBrowserMessagerType);
+                    var menuBrowserMessager = UnityEngine.Object.FindAnyObjectByType(menuBrowserMessagerType);
                     if (menuBrowserMessager == null)
                     {
                         return string.Empty;
@@ -85,4 +85,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

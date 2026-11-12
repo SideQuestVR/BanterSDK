@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Linq;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 using System.Globalization;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Float To String Invariant Culture")]
     [UnitShortTitle("FloatToString")]
-    [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class ToStringInvariant : Unit
     {
         [DoNotSerialize]
@@ -23,10 +22,10 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             floatInput = ValueInput("float", 0f);
-            stringOutput = ValueOutput("string", flow => {
+            stringOutput = ValueOutput("string", flow =>
+            {
                 return flow.GetValue<float>(floatInput).ToString(CultureInfo.InvariantCulture);
             });
         }
     }
 }
-#endif

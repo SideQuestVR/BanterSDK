@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Color: TryParseHtmlString")]
     [UnitShortTitle("TryParseHtmlString")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(Color))]
     public class ColorUtilityTryParseHtmlString : Unit
     {
@@ -27,7 +26,7 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => 
+            inputTrigger = ControlInput("", (flow) =>
             {
                 var colString = flow.GetValue<string>(hexColor);
                 if (colString[0] != '#')
@@ -46,4 +45,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

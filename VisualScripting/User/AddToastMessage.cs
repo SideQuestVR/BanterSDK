@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Add Toast Message")]
     [UnitShortTitle("Add Toast Message")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class AddToastMessage : Unit
     {
         [DoNotSerialize]
@@ -20,21 +19,25 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput message;
         [DoNotSerialize]
+        [PortLabel("Delay (s)")]
         public ValueInput delay;
         [DoNotSerialize]
+        [PortLabel("Timeout (s)")]
         public ValueInput timeout;
         [DoNotSerialize]
         public ValueInput color;
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _message = flow.GetValue<string>(message);
                 var _color = flow.GetValue<Color>(color);
                 var _timeout = flow.GetValue<int>(timeout);
                 var _delay = flow.GetValue<int>(delay);
-                
-                BanterScene.Instance().events.OnToast?.Invoke(_message, _timeout, _delay, _color);
+
+                // Seconds on the node; OnToast carries milliseconds (the host reads timeoutMs / 1000).
+                BSScene.Instance().events.OnToast?.Invoke(_message, _timeout * 1000, _delay * 1000, _color);
 
                 return outputTrigger;
             });
@@ -46,4 +49,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

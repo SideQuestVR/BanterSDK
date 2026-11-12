@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class SeeAttribute : Attribute

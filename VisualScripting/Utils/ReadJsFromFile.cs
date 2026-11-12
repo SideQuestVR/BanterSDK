@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Read BullSchript from File")]
     [UnitShortTitle("Read BS")]
     [UnitSubtitle("it's not JavaScript, it's BullSchript!")]
-    [UnitCategory("Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Browser")]
+    [TypeIcon(typeof(BSObjectId))]
     public class ReadJsFromFile : Unit
     {
         [DoNotSerialize]
@@ -23,7 +22,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             textAsset = ValueInput<TextAsset>("File");
-            jsCode = ValueOutput("BullSchript", (flow) => 
+            jsCode = ValueOutput("BullSchript", (flow) =>
             {
                 var asset = flow.GetValue<TextAsset>(textAsset);
                 if (asset == null)
@@ -37,4 +36,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

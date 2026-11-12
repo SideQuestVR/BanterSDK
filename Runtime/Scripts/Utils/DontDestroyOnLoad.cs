@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-9999)]
     public class DontDestroyOnLoad : MonoBehaviour

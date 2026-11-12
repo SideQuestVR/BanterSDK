@@ -1,7 +1,6 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Runtime.Serialization;
@@ -9,16 +8,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("Trigger Global Event")]
     [UnitShortTitle("Trigger Global Event")]
-    [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SendGlobalEvent : Unit
-    {        
-         [SerializeAs(nameof(argumentCount))]
+    {
+        [SerializeAs(nameof(argumentCount))]
         private int _argumentCount;
 
         [DoNotSerialize]
@@ -85,4 +84,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

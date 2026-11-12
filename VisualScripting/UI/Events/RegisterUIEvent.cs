@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Register UI Event")]
     [UnitShortTitle("Register UI Event")]
-    [UnitCategory("Banter\\UI\\Events")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Events")]
+    [TypeIcon(typeof(BSObjectId))]
     public class RegisterUIEvent : Unit
     {
         [DoNotSerialize]
@@ -31,7 +30,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var eventTypeValue = flow.GetValue<UIEventType>(eventType);
@@ -68,13 +68,13 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[RegisterUIEvent] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Convert event type to string name
                     var eventName = eventTypeValue.ToEventName();
-                    
+
                     // Format: panelId|REGISTER_UI_EVENT|elementId§eventType
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.REGISTER_UI_EVENT}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{eventName}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
@@ -105,7 +105,7 @@ namespace Banter.VisualScripting
                 return elementName;
 
             // Try to find the element in any registered panel
-            var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
+            var allPanels = FindObjects.All<BSUIPanel>();
             foreach (var panel in allPanels)
             {
                 try
@@ -129,4 +129,3 @@ namespace Banter.VisualScripting
 
     }
 }
-#endif

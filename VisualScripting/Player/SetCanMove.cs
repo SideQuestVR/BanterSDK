@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using SideQuest.FlexaBody;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Move")]
     [UnitShortTitle("Set Can Move")]
-    [UnitCategory("Banter\\Player\\Actions")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Player\\Actions")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetCanMove : Unit
     {
         [DoNotSerialize]
@@ -22,7 +21,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var value = flow.GetValue<bool>(canMove);
                 ActionsSystem.canMove = value;
                 return outputTrigger;
@@ -33,4 +33,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

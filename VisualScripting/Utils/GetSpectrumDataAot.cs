@@ -1,16 +1,15 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     /// <summary>
     /// Retrieves spectrum data from the AudioListener attached to the main camera.
     /// </summary>
     [UnitTitle("Audio: Get AudioListener Spectrum Data")]
     [UnitShortTitle("AudioListenerSpectrumData")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(AudioListener))]
     public class AudioListenerSpectrumData : Unit
     {
@@ -95,9 +94,9 @@ namespace Banter.VisualScripting
     /// </summary>
     [UnitTitle("Audio: Get AudioSource Spectrum Data")]
     [UnitShortTitle("AudioSourceSpectrumData")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(AudioSource))]
-     public class AudioSourceSpectrumData : Unit
+    public class AudioSourceSpectrumData : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
@@ -194,4 +193,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

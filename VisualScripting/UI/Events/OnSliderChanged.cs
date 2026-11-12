@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On Slider Changed")]
     [UnitShortTitle("On Slider Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\UI")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnSliderChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -58,22 +57,24 @@ namespace Banter.VisualScripting
             // Auto-register when graph starts, not when event arrives
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
-                        UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnSliderChanged");
-                        _eventRegistered = true;
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+
+                            UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnSliderChanged");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -105,14 +106,14 @@ namespace Banter.VisualScripting
                 // Only trigger if it's a float/numeric change event
                 return data.arguments != null && data.arguments.Length >= 1 &&
                        (data.arguments[0] is float ||
-                        (data.arguments[0] is string strVal && float.TryParse(strVal, out _)));
+                        (data.arguments[0] is string strVal && NumberFormat.TryParse(strVal, out _)));
             }
 
             // Otherwise, only trigger for the specific element with float values
             return eventElementId == resolvedTarget2 &&
                    data.arguments != null && data.arguments.Length >= 1 &&
                    (data.arguments[0] is float ||
-                    (data.arguments[0] is string strVal2 && float.TryParse(strVal2, out _)));
+                    (data.arguments[0] is string strVal2 && NumberFormat.TryParse(strVal2, out _)));
         }
 
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
@@ -130,13 +131,13 @@ namespace Banter.VisualScripting
                 // Parse new value
                 if (data.arguments[0] is float floatVal)
                     newValue = floatVal;
-                else if (data.arguments[0] is string strVal && float.TryParse(strVal, out var parsed))
+                else if (data.arguments[0] is string strVal && NumberFormat.TryParse(strVal, out var parsed))
                     newValue = parsed;
 
                 // Parse old value (for delta calculation)
                 if (data.arguments[1] is float oldFloatVal)
                     oldValue = oldFloatVal;
-                else if (data.arguments[1] is string oldStrVal && float.TryParse(oldStrVal, out var oldParsed))
+                else if (data.arguments[1] is string oldStrVal && NumberFormat.TryParse(oldStrVal, out var oldParsed))
                     oldValue = oldParsed;
 
                 flow.SetValue(value, newValue);
@@ -149,7 +150,7 @@ namespace Banter.VisualScripting
 
                 if (data.arguments[0] is float floatVal)
                     newValue = floatVal;
-                else if (data.arguments[0] is string strVal && float.TryParse(strVal, out var parsed))
+                else if (data.arguments[0] is string strVal && NumberFormat.TryParse(strVal, out var parsed))
                     newValue = parsed;
 
                 flow.SetValue(value, newValue);
@@ -163,4 +164,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

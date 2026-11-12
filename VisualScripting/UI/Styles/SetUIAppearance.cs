@@ -1,12 +1,11 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     public enum UIDisplay
     {
@@ -22,8 +21,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Set UI Appearance")]
     [UnitShortTitle("Set UI Appearance")]
-    [UnitCategory("Banter\\UI\\Styles\\Appearance")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Appearance")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIAppearance : Unit
     {
         [DoNotSerialize]
@@ -52,7 +51,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -76,14 +76,14 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUIAppearance] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set background color
                     var colorHex = $"#{ColorUtility.ToHtmlStringRGBA(bgColor)}";
                     SendStyleCommand(panelId, elemId, "background-color", colorHex);
-                    
+
                     // Set opacity
                     SendStyleCommand(panelId, elemId, "opacity", opacityVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                    
+
                     // Set display
                     string displayValue = displayVal switch
                     {
@@ -92,7 +92,7 @@ namespace Banter.VisualScripting
                         _ => "flex"
                     };
                     SendStyleCommand(panelId, elemId, "display", displayValue);
-                    
+
                     // Set visibility
                     string visibilityValue = visibilityVal switch
                     {
@@ -126,4 +126,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -1,16 +1,15 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Linq;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Teleport To Location")]
     [UnitShortTitle("Teleport")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class TeleportTo : Unit
     {
         [DoNotSerialize]
@@ -35,7 +34,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var position = flow.GetValue<Vector3>(targetPosition);
                 var rotation = flow.GetValue<float>(targetRotation);
                 var rotationVec = flow.GetValue<Vector3>(targetRotationVector);
@@ -43,7 +43,7 @@ namespace Banter.VisualScripting
                 var spawn = flow.GetValue<bool>(isSpawn);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnTeleport.Invoke(position, rotation > 0 ? new Vector3(0f, rotation, 0f) : rotationVec, stop, spawn);
+                    BSScene.Instance().events.OnTeleport.Invoke(position, rotation > 0 ? new Vector3(0f, rotation, 0f) : rotationVec, stop, spawn);
                 }, $"{nameof(TeleportTo)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
@@ -56,4 +56,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

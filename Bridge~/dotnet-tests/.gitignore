@@ -1,0 +1,4 @@
+bin/
+obj/
+# The package .gitignore drops Unity's generated *.csproj; this one is the suite's own.
+!BridgeCoreTests.csproj

@@ -228,7 +228,7 @@ GameObject:
   - component: {fileID: 699142358008838748}
   m_Layer: 20
   m_Name: GrabCol
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

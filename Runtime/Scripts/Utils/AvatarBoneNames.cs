@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Banter.SDK
+namespace BS
 {
     public enum AvatarBoneName
     {

@@ -6,7 +6,7 @@ public class StartProcess
 {
     public static int Do(Color color, string workingDirectory, string filename, string arguments, string tag, Action callback = null)
     {
-#if BANTER_EDITOR && !UNITY_EDITOR && !ENABLE_MONO
+#if GREENFIELD_PROJECT && !UNITY_EDITOR && !ENABLE_MONO
         // LogLine.Do("Launching banter-link with KS.Diagnostics");
         var process = new KS.Diagnostics.Process();
         process.StartInfo = new KS.Diagnostics.ProcessStartInfo();

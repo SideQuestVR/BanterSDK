@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Inject BullSchript")]
     [UnitShortTitle("Inject BS")]
-    [UnitCategory("Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Browser")]
+    [TypeIcon(typeof(BSObjectId))]
     public class InjectJS : Unit
     {
         [DoNotSerialize]
@@ -24,16 +23,15 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var code = flow.GetValue<string>(jsCode);
                 var returnCode = flow.GetValue<string>(returnId);
-#if BANTER_ORA
-                BanterScene.Instance().link.pipe.view.EvaluateJS(code,
+                BSScene.Instance().link.pipe.view.EvaluateJS(code,
                     s =>
                     {
-                        BanterScene.Instance().events.OnJsCallbackRecieved.Invoke(returnCode, s, true);
+                        BSScene.Instance().events.OnJsCallbackRecieved.Invoke(returnCode, s, true);
                     });
-#endif
 
                 return outputTrigger;
             });
@@ -43,4 +41,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

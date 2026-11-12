@@ -46,7 +46,7 @@ namespace Pixeye.Unity
 			if (target != null)
 				foreach (var c in cacheFolds)
 				{
-					EditorPrefs.SetBool(string.Format($"{c.Value.atr.name}{c.Value.props[0].name}{target.GetInstanceID()}"), c.Value.expanded);
+					EditorPrefs.SetBool(string.Format($"{c.Value.atr.name}{c.Value.props[0].name}{target.GetEntityId()}"), c.Value.expanded);
 					c.Value.Dispose();
 				}
 		}
@@ -183,7 +183,7 @@ namespace Pixeye.Unity
 
 						if (!cacheFolds.TryGetValue(fold.name, out c))
 						{
-							var expanded = EditorPrefs.GetBool(string.Format($"{fold.name}{objectFields[i].Name}{target.GetInstanceID()}"), false);
+							var expanded = EditorPrefs.GetBool(string.Format($"{fold.name}{objectFields[i].Name}{target.GetEntityId()}"), false);
 							cacheFolds.Add(fold.name, new CacheFoldProp {atr = fold, types = new HashSet<string> {objectFields[i].Name}, expanded = expanded});
 						}
 						else c.types.Add(objectFields[i].Name);

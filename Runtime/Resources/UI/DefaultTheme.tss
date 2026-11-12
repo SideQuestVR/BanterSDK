@@ -1,5 +1,303 @@
 @import url("unity-theme://default");
-VisualElement {}
+
+/*
+ * Panel font.
+ *
+ * The JS bridge implements no -unity-font-definition (SetStyle drops it with a warning), so a
+ * panel's font can only come from the theme. Unity's own editor UI is set in Inter, but UI Toolkit
+ * at runtime does not inherit that: with no textSettings on the PanelSettings it falls back to the
+ * project's default TextCore font, which here is LiberationSans. This puts every Banter panel on
+ * Inter to match the editor chrome.
+ *
+ * resource() rather than url() is deliberate. resource() stores a path string and resolves it
+ * through Resources.Load when the panel is built, so if the font is ever moved the text falls back
+ * to the default. A url("project://...") reference is a baked GUID, and a stale one fails the
+ * theme import outright.
+ */
+* {
+    -unity-font-definition: resource("UI/Fonts/Inter-Regular");
+}
+
 .unity-label {
     color: white;
+}
+
+/*
+ * Scrollbars.
+ *
+ * ScrollView builds its scroller, slider, tracker and dragger itself, so none of them have a JS
+ * handle and none can be reached through SetStyles. The only place they can be styled is here.
+ * These rules replace the default runtime theme's dark, arrow-button scrollbar with a slim light
+ * one to match the editor's light body.
+ */
+.unity-scroller {
+    background-color: #F0F0F0;
+    border-width: 0;
+    margin: 0;
+    /* Declared explicitly: this rule only ties the built-in `.unity-scroller` on specificity and
+       wins on order, so any property it does NOT name survives from the built-in theme. */
+    padding: 0;
+}
+
+/*
+ * The rail is inert. Only the thumb reacts to the pointer.
+ *
+ * Pinned rather than left alone: the built-in theme lights the scroller and its tracker on hover,
+ * and with a 24px bar that reads as the whole strip flashing when the ray merely crosses it. The
+ * `:enabled` variants match the built-in's own selector shape so they tie on specificity and win
+ * on order (our sheet is applied after the `@import` at the top of this file).
+ */
+.unity-scroller:hover,
+.unity-scroller:hover:enabled {
+    background-color: #F0F0F0;
+}
+
+/*
+ * 24px of bar, and a 12px gap on the content side. Wide because the pointer is a controller ray in
+ * a headset, where a slim desktop-sized bar is a genuinely hard target.
+ *
+ * The margin is what makes the gap: the scroller is a SIBLING of the content viewport inside the
+ * scroll view's row, so margin-left pushes the vertical bar away from the text it scrolls rather
+ * than moving it on screen. The margin comes after the `margin: 0` shorthand on purpose — later
+ * declarations win within a block, and the shorthand is still wanted for the other three sides.
+ *
+ * Anything that budgets width for the scrollbar (the Add panel's column arithmetic) must count
+ * 36px — bar plus gap — not the bar alone.
+ */
+.unity-scroller--vertical,
+.unity-scroll-view__vertical-scroller {
+    width: 24px;
+    min-width: 24px;
+    margin: 0;
+    margin-left: 12px;
+    padding: 0;
+}
+
+.unity-scroller--horizontal,
+.unity-scroll-view__horizontal-scroller {
+    height: 24px;
+    min-height: 24px;
+    margin: 0;
+    margin-top: 12px;
+    padding: 0;
+}
+
+/*
+ * The stepper arrows at each end.
+ *
+ * These rules were never the problem, and the specificity worry recorded here previously has now
+ * been settled by reading the built-in theme's selector table out of the editor's resource blob:
+ * nothing in it sets `display` on these buttons at all, so even the bare 10-specificity selector
+ * applies unopposed. They are genuinely hidden, and have been.
+ *
+ * Hiding them does NOT free the space they occupied, though — the built-in theme insets the slider
+ * separately, which is what the rule below exists to undo.
+ *
+ * The child-combinator variants and the zeroed box are kept as belt and braces for a future Unity
+ * that grows a `display` rule here. Deleting either is safe today.
+ */
+.unity-scroller__low-button,
+.unity-scroller__high-button,
+.unity-scroller--vertical > .unity-scroller__low-button,
+.unity-scroller--vertical > .unity-scroller__high-button,
+.unity-scroller--horizontal > .unity-scroller__low-button,
+.unity-scroller--horizontal > .unity-scroller__high-button {
+    display: none;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+}
+
+/*
+ * The slider that fills the scroller, and the selector is the whole point.
+ *
+ * This was a bare `.unity-scroller__slider` and it never applied. UI Toolkit scores specificity as
+ * id*100 + class*10 + type*1, and COMBINATORS COUNT FOR NOTHING — so a bare class is 10, while the
+ * built-in runtime theme writes this element only through `.unity-scroller--vertical
+ * .unity-scroller__slider` and its horizontal twin, which are 20. The built-in rule won every time,
+ * and it insets the slider by exactly the height of the stepper buttons at each end.
+ *
+ * That is where both halves of the reported bug came from: the buttons above are removed from layout
+ * by `display: none`, but the slider stayed pinned inside the space they used to occupy — so the
+ * scroller's own #F0F0F0 background showed through at both ends, and the dragger could only travel
+ * within the shortened slider, never reaching the extremes.
+ *
+ * Two classes on one simple selector is 20, plus the child selector's subject is another 10, giving
+ * 30. That beats the built-in outright rather than depending on which sheet is applied last.
+ */
+.unity-scroller.unity-scroller--vertical > .unity-scroller__slider,
+.unity-scroller.unity-scroller--horizontal > .unity-scroller__slider {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    min-width: auto;
+    min-height: auto;
+    width: auto;
+    height: auto;
+}
+
+/*
+ * The slider's input wrapper, which the drag container sits inside.
+ *
+ * Never styled here before, while the built-in theme gives it three rules — so its margins survived
+ * and inset the dragger's travel independently of everything above. On its own that is only a couple
+ * of pixels, which is why it reads as "nearly reaches the end" rather than as the gap the slider
+ * rule caused. Specificity 30, for the same reason and by the same construction.
+ */
+.unity-scroller .unity-base-slider--vertical > .unity-base-slider__input,
+.unity-scroller .unity-base-slider--horizontal > .unity-base-slider__input {
+    margin: 0;
+    padding: 0;
+    min-width: auto;
+    min-height: auto;
+    flex-grow: 1;
+}
+
+/*
+ * Everything below is scoped under `.unity-scroller`.
+ *
+ * A Scroller drives itself with an ordinary Slider, so `.unity-base-slider__*` matches the parts of
+ * a scrollbar — but it equally matches every real Slider in every panel on this theme. Unscoped,
+ * these rules were painting genuine sliders with an invisible track and a scrollbar-coloured
+ * dragger. Now that the dragger is brand teal rather than neutral grey, that bleed would be
+ * obvious, so the scope is what keeps a scrollbar rule from being a slider rule.
+ */
+.unity-scroller .unity-base-slider__tracker,
+.unity-scroller .unity-base-slider__tracker:hover,
+.unity-scroller .unity-base-slider__tracker:hover:enabled {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    margin: 0;
+}
+
+/*
+ * The dragger travels inside this, so any inset on it becomes dead space the thumb can never reach
+ * — which reads as a scrollbar that stops short of both ends even when the content is scrolled all
+ * the way. The dragger's own margin was already zeroed above and the slider is stretched to fill
+ * the scroller, so this was the last thing still holding the thumb off the ends.
+ *
+ * The insets are cleared as well as the box: the default runtime theme is compiled into the engine
+ * and cannot be read from disk to see which of the two it uses, and zeroing both costs nothing.
+ * Note `top`/`bottom` here are a no-op on a relatively positioned container, so this is safe
+ * whichever way that theme lays it out.
+ */
+.unity-scroller .unity-base-slider__drag-container {
+    margin: 0;
+    padding: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-width: auto;
+    min-height: auto;
+}
+
+/*
+ * The thumb at rest: brand teal, the same colour as the header bar, so the bar reads as part of
+ * the editor's chrome rather than as a neutral piece of the OS.
+ */
+.unity-scroller .unity-base-slider__dragger {
+    background-color: #26A69A;
+    border-width: 0;
+    /* Square, to match the panel's chrome — nothing else in the editor has rounded corners. */
+    border-radius: 0;
+    margin: 0;
+}
+
+/*
+ * Hover lifts one Material step to Teal 300; pressing drops back to the resting Teal 400.
+ *
+ * USS pseudo-classes do work here — it is only the JS bridge that cannot express :hover.
+ *
+ * `:enabled` is on these deliberately. The built-in theme writes the dragger through
+ * `.unity-scroller .unity-base-slider__dragger:hover:enabled` and `:active:enabled`, which score
+ * 40; a plain `:hover` here would score 30 and lose. Matching its shape ties at 40, and our sheet
+ * comes after the `@import`, so ours wins.
+ *
+ * The `:active` block MUST stay below the `:hover` one. A thumb being dragged is hovered as well as
+ * active, both selectors score 40, and a tie is broken by document order — so reversing these two
+ * blocks would leave a held thumb showing the hover colour and the press would never be visible.
+ */
+.unity-scroller .unity-base-slider__dragger:hover,
+.unity-scroller .unity-base-slider__dragger:hover:enabled {
+    background-color: #4DB6AC;
+}
+
+.unity-scroller .unity-base-slider__dragger:active,
+.unity-scroller .unity-base-slider__dragger:active:enabled {
+    background-color: #26A69A;
+}
+
+/* The thumb's minimum length, so a very long document still leaves something ray-sized to grab. */
+.unity-scroller .unity-base-slider--vertical .unity-base-slider__dragger {
+    left: 0;
+    right: 0;
+    width: auto;
+    min-height: 40px;
+}
+
+.unity-scroller .unity-base-slider--horizontal .unity-base-slider__dragger {
+    top: 0;
+    bottom: 0;
+    height: auto;
+    min-width: 40px;
+}
+
+/*
+ * Text fields, and the second box that was showing through every one of them.
+ *
+ * A UITK TextField is TWO elements: the field itself, which is what the JS bridge hands out and so
+ * the only one SetStyles can reach, and a child TextInput carrying `.unity-base-text-field__input`.
+ * The built-in runtime theme gives that child its own background, its own 1px border and its own
+ * corner radius — so every field drew the border the panel asked for AND a second, darker one inset
+ * a pixel inside it. That is the doubled box, and no amount of styling from JS could remove it,
+ * because JS cannot address the child at all.
+ *
+ * The child is neutralised rather than restyled, so the visible box stays the one the panel author
+ * set through SetStyles and there is exactly one place to change it. Padding and margin go too: the
+ * child fills the field, and any inset on it shifts the text away from the border the eye reads as
+ * the edge of the input.
+ *
+ * Specificity 20. The built-in theme writes this element through a bare
+ * `.unity-base-text-field__input` (10), so this beats it outright rather than depending on which
+ * sheet is applied last.
+ */
+.unity-base-text-field > .unity-base-text-field__input {
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+    border-width: 0;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/*
+ * The same, held through hover and focus — the built-in theme repaints the child in both states,
+ * and either one would bring the second box back the moment a pointer crossed the field.
+ *
+ * Focus is marked with a wash of the brand colour rather than with a ring. A ring here would be
+ * drawn one pixel inside the field's own border, which is precisely the doubled box this block
+ * exists to remove; and at panel distance in a headset a caret is not a reliable way to tell which
+ * field is taking your typing.
+ *
+ * Specificity 30, against the built-in's 20 for its `…__input:focus`.
+ */
+.unity-base-text-field > .unity-base-text-field__input:hover,
+.unity-base-text-field > .unity-base-text-field__input:hover:enabled {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.unity-base-text-field > .unity-base-text-field__input:focus,
+.unity-base-text-field > .unity-base-text-field__input:focus:enabled {
+    background-color: rgba(38, 166, 154, 0.10);
+    border-width: 0;
 }

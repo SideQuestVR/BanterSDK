@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Style")]
     [UnitShortTitle("Set UI Style")]
-    [UnitCategory("Banter\\UI\\Styles")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIStyle : Unit
     {
         [DoNotSerialize]
@@ -34,7 +33,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -56,13 +56,13 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUIStyle] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Convert the UIStyleProperty enum to its USS property name
                     var propertyName = property.ToUSSName();
-                    
+
                     // Format: panelId|SET_UI_STYLE|elementId§styleName§value
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propertyName}{MessageDelimiters.SECONDARY}{value ?? ""}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
@@ -86,4 +86,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

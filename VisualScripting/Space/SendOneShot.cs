@@ -1,16 +1,15 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Linq;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Send a One Shot Message")]
     [UnitShortTitle("SendOneShot")]
-    [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Networking")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SendOneShot : Unit
     {
         [DoNotSerialize]
@@ -27,12 +26,13 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _allInstances = flow.GetValue<bool>(allInstances);
                 var _data = flow.GetValue<string>(data);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnOneShot.Invoke(_data, _allInstances);
+                    BSScene.Instance().events.OnOneShot.Invoke(_data, _allInstances);
                 }, $"{nameof(SendOneShot)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
@@ -42,4 +42,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

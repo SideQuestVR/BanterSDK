@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Data.Common;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get Users")]
     [UnitShortTitle("Get Users")]
-    [UnitCategory("Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Space")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUsers : Unit
     {
         [DoNotSerialize]
@@ -19,17 +18,18 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            info = ValueOutput("Users Array", (f) => {
-                var data = BanterScene.Instance().users;
+            info = ValueOutput("Users Array", (f) =>
+            {
+                var data = BSScene.Instance().users;
                 if (data == null)
                 {
                     return null;
                 }
 
-                List<BanterUser> users = new ();
+                List<BSUser> users = new();
                 for (var i = 0; i < data.Count; i++)
                 {
-                    users.Add(new BanterUser()
+                    users.Add(new BSUser()
                     {
                         name = data[i].name,
                         id = data[i].id,
@@ -45,4 +45,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

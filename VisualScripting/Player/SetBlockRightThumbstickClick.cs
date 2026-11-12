@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using SideQuest.FlexaBody;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set Block Right Thumbstick Click")]
     [UnitShortTitle("Block Right Stick Click")]
-    [UnitCategory("Banter\\Player\\Input")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Player\\Input")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetBlockRightThumbstickClick : Unit
     {
         [DoNotSerialize]
@@ -22,7 +21,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var value = flow.GetValue<bool>(blockInput);
                 ActionsSystem.Blocker_RightThumbstickClick.All = value;
                 return outputTrigger;
@@ -33,4 +33,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

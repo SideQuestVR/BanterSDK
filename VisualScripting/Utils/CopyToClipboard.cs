@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Copy Text To Clipboard")]
     [UnitShortTitle("CopyToClipboard")]
-    [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CopyToClipboard : Unit
     {
         [DoNotSerialize]
@@ -21,7 +20,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _text = flow.GetValue<string>(text);
                 UniClipboard.SetText(_text);
                 return outputTrigger;
@@ -31,4 +31,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

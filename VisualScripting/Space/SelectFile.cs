@@ -1,21 +1,20 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Linq;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Select file (GLB/JPG/PNG)")]
     [UnitShortTitle("SelectFile")]
-    [UnitCategory("Banter\\Files")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Files")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SelectFile : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
-    
+
         [DoNotSerialize]
         public ControlOutput outputTrigger;
 
@@ -24,11 +23,12 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _type = flow.GetValue<SelectFileType>(type);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnSelectFile.Invoke(_type);
+                    BSScene.Instance().events.OnSelectFile.Invoke(_type);
                 }, $"{nameof(SelectFile)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
@@ -37,4 +37,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

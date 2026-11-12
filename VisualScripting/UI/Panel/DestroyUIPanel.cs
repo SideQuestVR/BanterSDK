@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Destroy UI Panel")]
     [UnitShortTitle("Destroy UI Panel")]
-    [UnitCategory("Banter\\UI\\Panel")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Panel")]
+    [TypeIcon(typeof(BSObjectId))]
     public class DestroyUIPanel : Unit
     {
         [DoNotSerialize]
@@ -22,8 +21,9 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
-                var panel = flow.GetValue<BanterUIPanel>(panelReference);
+            inputTrigger = ControlInput("", (flow) =>
+            {
+                var panel = flow.GetValue<BSUIPanel>(panelReference);
 
                 if (panel == null)
                 {
@@ -49,8 +49,7 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            panelReference = ValueInput<BanterUIPanel>("Panel");
+            panelReference = ValueInput<BSUIPanel>("Panel");
         }
     }
 }
-#endif

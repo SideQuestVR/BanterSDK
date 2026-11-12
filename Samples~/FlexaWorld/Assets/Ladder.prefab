@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 2069580114516281857}
   m_Layer: 20
   m_Name: Cylinder (5)
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -139,7 +139,7 @@ GameObject:
   - component: {fileID: 8594647968149591905}
   m_Layer: 20
   m_Name: Cylinder
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -263,7 +263,7 @@ GameObject:
   - component: {fileID: 2900116886651013995}
   m_Layer: 20
   m_Name: Cylinder (3)
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -387,7 +387,7 @@ GameObject:
   - component: {fileID: 3072866098910601349}
   m_Layer: 20
   m_Name: Cylinder (7)
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -602,7 +602,7 @@ GameObject:
   - component: {fileID: 5025944758930478458}
   m_Layer: 20
   m_Name: Cylinder (6)
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -726,7 +726,7 @@ GameObject:
   - component: {fileID: 4366377165864573556}
   m_Layer: 20
   m_Name: Cylinder (4)
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -850,7 +850,7 @@ GameObject:
   - component: {fileID: 2102573975260487833}
   m_Layer: 20
   m_Name: Cylinder (1)
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -974,7 +974,7 @@ GameObject:
   - component: {fileID: 7893829327916671239}
   m_Layer: 20
   m_Name: Cylinder (2)
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On UI Mouse Event")]
     [UnitShortTitle("On UI Mouse Event")]
-    [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\UI")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnUIMouseEvent : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -67,38 +66,40 @@ namespace Banter.VisualScripting
             // Auto-register when graph starts
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    var targetMouseEvent = flow.GetValue<UIMouseEventType>(mouseEventType);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
-                        // Map mouse event type to UIEventType
-                        UIEventType eventType = targetMouseEvent switch
-                        {
-                            UIMouseEventType.Click => UIEventType.Click,
-                            UIMouseEventType.DoubleClick => UIEventType.DoubleClick,
-                            UIMouseEventType.MouseDown => UIEventType.MouseDown,
-                            UIMouseEventType.MouseUp => UIEventType.MouseUp,
-                            UIMouseEventType.MouseMove => UIEventType.MouseMove,
-                            UIMouseEventType.MouseEnter => UIEventType.MouseEnter,
-                            UIMouseEventType.MouseLeave => UIEventType.MouseLeave,
-                            UIMouseEventType.MouseOver => UIEventType.MouseOver,
-                            UIMouseEventType.MouseOut => UIEventType.MouseOut,
-                            _ => UIEventType.Click
-                        };
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        var targetMouseEvent = flow.GetValue<UIMouseEventType>(mouseEventType);
 
-                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIMouseEvent");
-                        _eventRegistered = true;
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+                            // Map mouse event type to UIEventType
+                            UIEventType eventType = targetMouseEvent switch
+                            {
+                                UIMouseEventType.Click => UIEventType.Click,
+                                UIMouseEventType.DoubleClick => UIEventType.DoubleClick,
+                                UIMouseEventType.MouseDown => UIEventType.MouseDown,
+                                UIMouseEventType.MouseUp => UIEventType.MouseUp,
+                                UIMouseEventType.MouseMove => UIEventType.MouseMove,
+                                UIMouseEventType.MouseEnter => UIEventType.MouseEnter,
+                                UIMouseEventType.MouseLeave => UIEventType.MouseLeave,
+                                UIMouseEventType.MouseOver => UIEventType.MouseOver,
+                                UIMouseEventType.MouseOut => UIEventType.MouseOut,
+                                _ => UIEventType.Click
+                            };
+
+                            UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIMouseEvent");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -152,9 +153,9 @@ namespace Banter.VisualScripting
             // Extract element ID from event name
             var parts = data.name.Split('_');
             var elementIdFromEvent = parts.Length > 1 ? parts[1] : "";
-            
+
             flow.SetValue(triggeredElementId, elementIdFromEvent);
-            
+
             // Parse mouse event arguments
             if (data.arguments != null && data.arguments.Length >= 2)
             {
@@ -165,7 +166,7 @@ namespace Banter.VisualScripting
                     flow.SetValue(mousePosition, parsedPos);
                 else
                     flow.SetValue(mousePosition, Vector2.zero);
-                
+
                 // Mouse button
                 if (data.arguments[1] is int button)
                     flow.SetValue(mouseButton, button);
@@ -173,7 +174,7 @@ namespace Banter.VisualScripting
                     flow.SetValue(mouseButton, parsedButton);
                 else
                     flow.SetValue(mouseButton, 0);
-                    
+
                 // Modifier keys (if available)
                 if (data.arguments.Length > 2 && data.arguments[2] is string modKeys)
                     flow.SetValue(modifierKeys, modKeys);
@@ -191,19 +192,19 @@ namespace Banter.VisualScripting
         private bool TryParseVector2(string value, out Vector2 result)
         {
             result = Vector2.zero;
-            
+
             if (string.IsNullOrEmpty(value))
                 return false;
-                
+
             var parts = value.Split(',');
-            if (parts.Length >= 2 && 
-                float.TryParse(parts[0].Trim(), out var x) && 
-                float.TryParse(parts[1].Trim(), out var y))
+            if (parts.Length >= 2 &&
+                NumberFormat.TryParse(parts[0].Trim(), out var x) &&
+                NumberFormat.TryParse(parts[1].Trim(), out var y))
             {
                 result = new Vector2(x, y);
                 return true;
             }
-            
+
             return false;
         }
     }
@@ -224,4 +225,3 @@ namespace Banter.VisualScripting
         MouseOut
     }
 }
-#endif

@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     public enum BackgroundType
     {
@@ -20,8 +19,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Set UI Background")]
     [UnitShortTitle("Set UI Background")]
-    [UnitCategory("Banter\\UI\\Styles\\Appearance")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Appearance")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIBackground : Unit
     {
         [DoNotSerialize]
@@ -59,7 +58,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -200,4 +200,3 @@ namespace Banter.VisualScripting
 
     }
 }
-#endif

@@ -1,0 +1,1757 @@
+//#define BANTER_LINK_DEBUG_LOG
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+using System.IO;
+using System.Text;
+using BS.UI.Bridge;
+
+
+using Unity.VisualScripting;
+using BS.Utilities.Async;
+using NUnit.Framework;
+using System.Linq;
+using SideQuest.Ora;
+using BS.Bridge;
+namespace BS
+{
+    public class BSLink : MonoBehaviour
+    {
+        /// <summary>Asset reference of the world (space page) browser's live texture, e.g. a BS.Material texture.</summary>
+        public const string WORLD_BROWSER_TEXTURE = "asset_browser_world";
+        public BSPipe pipe;
+        public BSScene scene;
+        public event EventHandler Connected;
+        float timeoutDisplay = 0;
+        // The page's session: everything between it and Unity. Null only until ConnectPipe.
+        internal BridgeView bridge;
+
+        Dictionary<string, string> androidStats = new Dictionary<string, string>();
+
+        // Set when play mode ends or the link goes away. Timers and delays started by the link run on
+        // other threads and outlive it; they check this instead of reporting against a dead scene.
+        volatile bool shuttingDown;
+
+        void OnApplicationQuit() => ShutDown();
+        void OnDestroy() => ShutDown();
+
+        void ShutDown()
+        {
+            shuttingDown = true;
+            if (bridge != null)
+            {
+                BridgePump.Unregister(this);
+                // Its document's half-assembled message no longer counts against the shared reassembly budget.
+                bridge.Shutdown();
+            }
+        }
+
+        // Whether this page has been told about the users already present (see OnUnitySceneLoaded).
+        bool usersAnnounced;
+
+        void Start()
+        {
+            scene.events.OnLoad.AddListener(() =>
+            {
+                usersAnnounced = false;
+                ReleasePageAssets();
+            });
+            scene.events.OnJsCallbackRecieved.AddListener((id, data, isReturn) =>
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
+                    EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
+                }, $"{nameof(BSLink)}.{nameof(Start)}"));
+            });
+        }
+
+        string GetMsgData(string msg, string command)
+        {
+            return msg.Substring((command + MessageDelimiters.PRIMARY).Length);
+        }
+
+        async void ParseCommand(string msg)
+        {
+            if (msg.StartsWith(APICommands.LOG))
+            {
+                var logData = GetMsgData(msg, APICommands.LOG).Split("VrApi");
+                if (logData.Length > 1)
+                {
+                    var statsData = logData[1].Split(":");
+                    if (statsData.Length > 1)
+                    {
+                        var stats = statsData[1].Split(",");
+                        for (int i = 0; i < stats.Length; i++)
+                        {
+                            var stat = stats[i].Split("=");
+                            if (stat.Length > 1)
+                            {
+                                if (androidStats.ContainsKey(stat[0]))
+                                {
+                                    androidStats[stat[0]] = stat[1];
+                                }
+                                else
+                                {
+                                    androidStats.Add(stat[0], stat[1]);
+                                }
+                            }
+                        }
+                        if (int.TryParse(androidStats["Free"].Substring(0, androidStats["Free"].Length - 2), out int memory))
+                        {
+                            scene.events.OnAndroidMemoryChanged.Invoke(memory);
+                        }
+                    }
+                }
+            }
+            else if (msg.StartsWith(APICommands.ONLOAD))
+            {
+                // Debug.Log("HERERER! " +msg); 
+                // _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
+                // scene.SetLoaded();
+            }
+            else if (msg.StartsWith(APICommands.NOTHING_20S))
+            {
+                // After LoadStarted (NONE) this can only be the page being replaced: its 30 s timer must not make the
+                // new load "ready", or that page's later requests would be answered into the new one.
+                if (scene.state == SceneState.NONE) return;
+                scene.state = SceneState.NOTHING_20S;
+                LogLine.Do(LogLine.banterColor, LogTag.Banter, "No objects yet after 30 seconds...");
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => timeoutDisplay = Time.time, $"{nameof(BSLink)}.{nameof(ParseCommand)}.NOTHING_20S"));
+                scene.loadingManager?.SetLoadProgress("Still Loading... 😅😬", 0, "No objects loaded yet after 20 seconds...", true);
+            }
+            else if (msg.StartsWith(APICommands.NOTHING))
+            {
+                // Likewise the replaced page's 4:20 timer must not cancel the new load.
+                if (scene.state == SceneState.NONE) return;
+                scene.state = SceneState.LOAD_FAILED;
+                scene.Cancel("No objects yet after 4:20 seconds, failing...");
+            }
+            else if (msg.StartsWith(APICommands.LOAD_FAILED))
+            {
+                scene.state = SceneState.LOAD_FAILED;
+                scene.Cancel("The web page failed to load!");
+            }
+            else if (msg.StartsWith(APICommands.ENABLE_LEGACY))
+            {
+                scene.events.OnLegacyEnabled.Invoke();
+                LogLine.Do(LogLine.banterColor, LogTag.Banter, "Running in legacy AFRAME mode...");
+            }
+            else if (msg.StartsWith(APICommands.SET_PROTECTED_SPACE_PROPS))
+            {
+                scene.SetProps(APICommands.SET_PROTECTED_SPACE_PROPS, GetMsgData(msg, APICommands.SET_PROTECTED_SPACE_PROPS));
+            }
+            else if (msg.StartsWith(APICommands.SET_PUBLIC_SPACE_PROPS))
+            {
+                scene.SetProps(APICommands.SET_PUBLIC_SPACE_PROPS, GetMsgData(msg, APICommands.SET_PUBLIC_SPACE_PROPS));
+            }
+            else if (msg.StartsWith(APICommands.SET_WORLD_BROWSER_SIZE))
+            {
+                // w|1920§h|1080, in the space-props format; an empty payload restores the default size.
+                var prefix = APICommands.SET_WORLD_BROWSER_SIZE + MessageDelimiters.PRIMARY;
+                var data = msg.Length > prefix.Length ? msg.Substring(prefix.Length) : "";
+                int width = 0, height = 0;
+                foreach (var prop in data.Split(MessageDelimiters.SECONDARY))
+                {
+                    var kv = prop.Split(MessageDelimiters.TERTIARY);
+                    if (kv.Length != 2) continue;
+                    if (kv[0] == "w") int.TryParse(kv[1], out width);
+                    else if (kv[0] == "h") int.TryParse(kv[1], out height);
+                }
+                scene.SetWorldBrowserSize(width, height);
+            }
+            else if (msg.StartsWith(APICommands.SET_USER_PROPS))
+            {
+                var restOfMessage = GetMsgData(msg, APICommands.SET_USER_PROPS);
+                var parts = restOfMessage.Split(MessageDelimiters.PRIMARY);
+                if (parts.Length == 2)
+                {
+                    scene.SetProps(APICommands.SET_USER_PROPS, parts[0], parts[1]);
+                }
+                else
+                {
+                    scene.SetProps(APICommands.SET_USER_PROPS, restOfMessage);
+                }
+            }
+            else if (msg.StartsWith(APICommands.SCENE_START))
+            {
+                if (droppedWhileLoading > 0)
+                {
+                    LogLine.Do(LogLine.banterColor, LogTag.Banter, "Dropped " + droppedWhileLoading + " request(s) from the previous page.");
+                    droppedWhileLoading = 0;
+                }
+                scene.state = SceneState.SCENE_START;
+                scene.RestartEmptySceneGrace();
+            }
+            // else if (msg.StartsWith(APICommands.DOM_READY))
+            // {
+            //     scene.state = SceneState.DOM_READY;
+            //     scene.events.OnDomReady.Invoke();
+            //     scene.SetLoaded();
+            // }
+            else if (msg.StartsWith(APICommands.SCENE_READY))
+            {
+                scene.state = SceneState.SCENE_READY;
+                scene.events.OnSceneReady.Invoke();
+                LogLine.Do(LogLine.banterColor, LogTag.Banter, "Banter Scene Loaded.");
+                // Names the components still loading if THIS load has not finished 25 s after its SCENE_READY. Tied
+                // to the load's completion source: started after the wait below (as it used to be), its own load was
+                // always done by then, and it fired instead during the NEXT world's load (loaded reset, state NONE),
+                // reporting that world as failed seconds after joining.
+                var load = scene.loadUrlTaskCompletionSource;
+                _ = TaskRunner.Run(async () =>
+                {
+                    await Task.Delay(25000);
+                    // The delay outlives play mode; a scene torn down meanwhile did not fail to load.
+                    if (shuttingDown) return;
+                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                    {
+                        if (shuttingDown || !ReferenceEquals(scene.loadUrlTaskCompletionSource, load)) return;
+                        scene.LogMissing();
+                    }, $"{nameof(BSLink)}.{nameof(ParseCommand)}.SCENE_READY LogMissing"));
+                }, $"{nameof(BSLink)}.{nameof(ParseCommand)}.SCENE_READY Delay");
+                await new WaitForSeconds(2);
+                await new WaitUntil(() =>
+                {
+                    // Bounded: components other than asset bundles that stop making progress stop holding the gate.
+                    scene.ReleaseStalledComponents(Time.realtimeSinceStartup);
+                    scene.SetLoaded();
+                    return scene.loaded;
+                });
+                LogLine.Do(LogLine.banterColor, LogTag.Banter, "After Banter Scene Loaded.");
+                OnUnitySceneLoaded();
+            }
+            else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
+            {
+                var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
+                scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], true);
+            }
+            else if (msg.StartsWith(APICommands.KEYBOARD_FOCUS))
+            {
+                scene.events.KeyboardFocus.Invoke(GetMsgData(msg, APICommands.KEYBOARD_FOCUS));
+            }
+            else if (msg.StartsWith(APICommands.TELEMETRY))
+            {
+                scene.data.SendTelemetry(ParseTelemetry(GetMsgData(msg, APICommands.TELEMETRY)));
+            }
+            // The page sends these two without a request id (asset.ts). Queued like the rest of a document's work, so a
+            // new page's asset lands behind the release of the old page's (OnLoad).
+            else if (msg.StartsWith(APICommands.CREATE_ASSET))
+            {
+                var data = GetMsgData(msg, APICommands.CREATE_ASSET);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => HandleCreateAsset(data, NoRequest), $"{nameof(BSLink)}.{nameof(ParseCommand)}.CREATE_ASSET"));
+            }
+            else if (msg.StartsWith(APICommands.DESTROY_ASSET))
+            {
+                var data = GetMsgData(msg, APICommands.DESTROY_ASSET);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => HandleDestroyAsset(data, NoRequest), $"{nameof(BSLink)}.{nameof(ParseCommand)}.DESTROY_ASSET"));
+            }
+            else if (UIElementBridge.IsUICommand(msg))
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => UIElementBridge.HandleMessage(msg), $"{nameof(BSLink)}.{nameof(ParseCommand)}.UIElementBridge.IsUICommand"));
+            }
+            else
+            {
+                LogLine.Do(Color.red, LogTag.Banter, "Unknown parse message: " + msg);
+            }
+        }
+
+        /// <summary>"event¶key|value§key|value", as scene.ts _t writes it. A prop with no value has an empty one.</summary>
+        internal static (string eventName, KeyValuePair<string, string>[] keyValues) ParseTelemetry(string data)
+        {
+            var parts = data.Split(MessageDelimiters.PRIMARY, 2);
+            var keyValues = new List<KeyValuePair<string, string>>();
+            if (parts.Length > 1)
+            {
+                foreach (var prop in parts[1].Split(MessageDelimiters.SECONDARY, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var keyValue = prop.Split(MessageDelimiters.TERTIARY, 2);
+                    keyValues.Add(new KeyValuePair<string, string>(WireText.Decode(keyValue[0]), keyValue.Length > 1 ? WireText.Decode(keyValue[1]) : ""));
+                }
+            }
+            return (WireText.Decode(parts[0]), keyValues.ToArray());
+        }
+
+        void ParseRequest(string msg, int id, string full)
+        {
+            if (!scene.isReady)
+            {
+                if (scene.state == SceneState.NONE)
+                {
+                    // A page is being loaded and its Scene has not said SCENE_START, which every document's Scene sends
+                    // before any request, and which its session holds until its LoadStarted and OnLoad have run (BridgeView).
+                    // So this is the previous document, which keeps running until the new one commits: nobody to answer.
+                    droppedWhileLoading++;
+                    return;
+                }
+                // Failed or cancelled: say so, rather than leave the page's await hanging.
+                ReplyError(id, CommandOf(msg) + ": scene not ready (" + scene.state + ")");
+                return;
+            }
+            DispatchRequest(msg, id, full);
+        }
+
+        // The previous document's requests that arrived while the next one loads: reported when its Scene starts.
+        int droppedWhileLoading;
+
+        static string CommandOf(string msg)
+        {
+            int end = msg.IndexOf(MessageDelimiters.PRIMARY, StringComparison.Ordinal);
+            return end >= 0 ? msg.Substring(0, end) : msg;
+        }
+
+        /// <summary>The page's request id that nothing waits on (scene.ts SendWithoutReply).</summary>
+        internal const int NoReplyRequestId = 10000;
+
+        /// <summary>
+        /// Rejects the page's request <paramref name="id"/>: the page's promise rejects with "!ree!¶" +
+        /// <paramref name="reason"/>. Id 10000 has no waiter, so it gets nothing.
+        /// </summary>
+        internal void ReplyError(int id, string reason)
+        {
+            if (id == NoReplyRequestId) return;
+            Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + id + MessageDelimiters.PRIMARY + APICommands.REQUEST_ERROR + MessageDelimiters.PRIMARY + reason);
+        }
+
+        /// <summary>
+        /// A request answered later must still answer if it faults (the page's await never settled), and its
+        /// exception must be observed rather than surface as an UnobservedTaskException.
+        /// </summary>
+        void ReplyOnFault(Task request, int id, string command)
+        {
+            request.ContinueWith(t =>
+            {
+                var e = t.Exception?.GetBaseException(); // reading Exception marks it observed
+                Debug.LogWarning($"[Banter] {command} request {id} failed: {e?.Message}");
+                ReplyError(id, command + ": " + e?.Message);
+            }, System.Threading.CancellationToken.None,
+               TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }
+
+        void DispatchRequest(string msg, int id, string full)
+        {
+            try
+            {
+                if (msg.StartsWith(APICommands.OBJECT_ADDED))
+                {
+                    scene.AddJsObject(GetMsgData(msg, APICommands.OBJECT_ADDED), id);
+                }
+                else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
+                {
+                    var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
+                    scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], false);
+                }
+                else if (msg.StartsWith(APICommands.SCENE_SETTINGS))
+                {
+                    scene.SetSettings(GetMsgData(msg, APICommands.SCENE_SETTINGS), id);
+                }
+                else if (msg.StartsWith(APICommands.START_TTS))
+                {
+                    scene.StartTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
+                }
+                else if (msg.StartsWith(APICommands.WAIT_FOR_END_OF_FRAME))
+                {
+                    ReplyOnFault(scene.WaitForEndOfFrame(id), id, "WAIT_FOR_END_OF_FRAME");
+                }
+                else if (msg.StartsWith(APICommands.STOP_TTS))
+                {
+                    scene.StopTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
+                }
+                else if (msg.StartsWith(APICommands.AI_IMAGE))
+                {
+                    scene.AiImage(GetMsgData(msg, APICommands.AI_IMAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.AI_MODEL))
+                {
+                    scene.AiModel(GetMsgData(msg, APICommands.AI_MODEL), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_TRANSFORM))
+                {
+                    scene.SetJsTransform(GetMsgData(msg, APICommands.SET_TRANSFORM), id);
+                }
+                else if (msg.StartsWith(APICommands.WATCH_TRANSFORM))
+                {
+                    Debug.Log(msg);
+                    scene.WatchJsTransform(GetMsgData(msg, APICommands.WATCH_TRANSFORM), id);
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
+                {
+                    scene.ObjectTextureToBase64(GetMsgData(msg, APICommands.OBJECT_TEX_TO_BASE_64), id);
+                }
+                else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
+                {
+                    scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
+                }
+                else if (msg.StartsWith(APICommands.SELECT_FILE))
+                {
+                    scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
+                }
+                else if (msg.StartsWith(APICommands.SCRIPT_GRAPH))
+                {
+                    scene.ScriptGraph(GetMsgData(msg, APICommands.SCRIPT_GRAPH), id);
+                }
+                else if (msg.StartsWith(APICommands.PERSIST_FILE))
+                {
+                    scene.PersistFile(GetMsgData(msg, APICommands.PERSIST_FILE), id);
+                }
+                else if (msg.StartsWith(APICommands.WORLD_STATE_OP))
+                {
+                    scene.WorldStateOp(GetMsgData(msg, APICommands.WORLD_STATE_OP), id);
+                }
+                else if (msg.StartsWith(APICommands.SPACE_STATE_OP))
+                {
+                    scene.SpaceStateOp(GetMsgData(msg, APICommands.SPACE_STATE_OP), id);
+                }
+                else if (msg.StartsWith(APICommands.USER_STATE_OP))
+                {
+                    scene.UserStateOp(GetMsgData(msg, APICommands.USER_STATE_OP), id);
+                }
+                else if (msg.StartsWith(APICommands.PROGRESSION_OP))
+                {
+                    scene.ProgressionOp(GetMsgData(msg, APICommands.PROGRESSION_OP), id);
+                }
+                else if (msg.StartsWith(APICommands.HOST_EXT_OP))
+                {
+                    scene.HostExtensionOp(GetMsgData(msg, APICommands.HOST_EXT_OP), id);
+                }
+                else if (msg.StartsWith(APICommands.LIGHTING_DATA_GET))
+                {
+                    scene.LightingDataGet(id);
+                }
+                else if (msg.StartsWith(APICommands.LIGHTING_DATA_SET))
+                {
+                    scene.LightingDataSet(GetMsgData(msg, APICommands.LIGHTING_DATA_SET), id);
+                }
+                else if (msg.StartsWith(APICommands.GRAVITY))
+                {
+                    scene.Gravity(GetMsgData(msg, APICommands.GRAVITY), id);
+                }
+                else if (msg.StartsWith(APICommands.TIME_SCALE))
+                {
+                    scene.TimeScale(GetMsgData(msg, APICommands.TIME_SCALE), id);
+                }
+                else if (msg.StartsWith(APICommands.ADD_PLAYER_FORCE))
+                {
+                    scene.AddPlayerForce(GetMsgData(msg, APICommands.ADD_PLAYER_FORCE), id);
+                }
+                else if (msg.StartsWith(APICommands.RELEASE_GRAB))
+                {
+                    scene.ReleaseGrab(GetMsgData(msg, APICommands.RELEASE_GRAB), id);
+                }
+                else if (msg.StartsWith(APICommands.DEEP_LINK))
+                {
+                    var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
+                    scene.events.OnDeepLink.Invoke(WireText.Decode(parts[0]), parts[1]);
+                }
+                else if (msg.StartsWith(APICommands.LOAD_URL))
+                {
+                    scene.GoToUrl(GetMsgData(msg, APICommands.LOAD_URL));
+                }
+                else if (msg.StartsWith(APICommands.ONE_SHOT))
+                {
+                    var parts = GetMsgData(msg, APICommands.ONE_SHOT).Split(MessageDelimiters.PRIMARY, 2);
+                    scene.events.OnOneShot.Invoke(parts[1], parts[0] == "1");
+                }
+                else if (msg.StartsWith(APICommands.YT_INFO))
+                {
+                    scene.YtInfo(GetMsgData(msg, APICommands.YT_INFO), id);
+                }
+                else if (msg.StartsWith(APICommands.OPEN_PAGE))
+                {
+                    scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.TELEPORT))
+                {
+                    scene.Teleport(GetMsgData(msg, APICommands.TELEPORT), id);
+                }
+                else if (msg.StartsWith(APICommands.CALL_METHOD))
+                {
+                    scene.CallMethodOnJsComponent(GetMsgData(msg, APICommands.CALL_METHOD), id, full);
+                }
+                else if (msg.StartsWith(APICommands.INSTANTIATE))
+                {
+                    scene.InstantiateJsObject(GetMsgData(msg, APICommands.INSTANTIATE), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_TAG))
+                {
+                    scene.SetJsObjectTag(GetMsgData(msg, APICommands.SET_TAG), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_NAME))
+                {
+                    scene.SetJsObjectName(GetMsgData(msg, APICommands.SET_NAME), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_NETWORK_ID))
+                {
+                    scene.SetJsObjectNetworkId(GetMsgData(msg, APICommands.SET_NETWORK_ID), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_LAYER))
+                {
+                    scene.SetJsObjectLayer(GetMsgData(msg, APICommands.SET_LAYER), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_ACTIVE))
+                {
+                    scene.SetJsObjectActive(GetMsgData(msg, APICommands.SET_ACTIVE), id);
+                }
+                else if (msg.StartsWith(APICommands.SEND_MENU_BROWSER_MESSAGE))
+                {
+                    scene.SendBrowserMessage(GetMsgData(msg, APICommands.SEND_MENU_BROWSER_MESSAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.RAYCAST))
+                {
+                    scene.PhysicsRaycast(GetMsgData(msg, APICommands.RAYCAST), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_JSOID))
+                {
+                    scene.SetJsObjectId(GetMsgData(msg, APICommands.SET_JSOID), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_JSCID))
+                {
+                    scene.SetJsComponentId(GetMsgData(msg, APICommands.SET_JSCID), id);
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_UPDATE_REQUEST))
+                {
+                    scene.UpdateJsObject(GetMsgData(msg, APICommands.OBJECT_UPDATE_REQUEST), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_PARENT))
+                {
+                    scene.SetParent(GetMsgData(msg, APICommands.SET_PARENT), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_REMOVED))
+                {
+                    scene.DestroyJsComponent(int.Parse(GetMsgData(msg, APICommands.COMPONENT_REMOVED)), id);
+                }
+                else if (msg.StartsWith(APICommands.WATCH_PROPERTIES))
+                {
+                    ReplyOnFault(scene.WatchProperties(GetMsgData(msg, APICommands.WATCH_PROPERTIES), id), id, "WATCH_PROPERTIES");
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_REMOVED))
+                {
+                    scene.DestroyJsObject(int.Parse(GetMsgData(msg, APICommands.OBJECT_REMOVED)), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_UPDATED))
+                {
+                    scene.UpdateJsComponent(GetMsgData(msg, APICommands.COMPONENT_UPDATED), id);
+                    // }else if(msg.StartsWith(APICommands.ATTACH)) {
+                    //     scene.Attach(GetMsgData(msg, APICommands.ATTACH), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_ADDED))
+                {
+                    scene.AddJsComponent(GetMsgData(msg, APICommands.COMPONENT_ADDED), id);
+                }
+                else if (msg.StartsWith(APICommands.QUERY_COMPONENTS))
+                {
+                    ReplyOnFault(scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id), id, "QUERY_COMPONENTS");
+                }
+                else if (msg.StartsWith(APICommands.GET_BOUNDS))
+                {
+                    scene.GetJsBounds(GetMsgData(msg, APICommands.GET_BOUNDS), id);
+                }
+                else if (msg.StartsWith(APICommands.INLINE_OBJECT))
+                {
+                    scene.InlineJsObject(GetMsgData(msg, APICommands.INLINE_OBJECT), id);
+                }
+                else if (msg.StartsWith(APICommands.INLINE_CRAWL))
+                {
+                    scene.InlineJsCrawl(GetMsgData(msg, APICommands.INLINE_CRAWL), id);
+                }
+                // Asset System Commands
+                else if (msg.StartsWith(APICommands.CREATE_ASSET))
+                {
+                    HandleCreateAsset(GetMsgData(msg, APICommands.CREATE_ASSET), id);
+                }
+                else if (msg.StartsWith(APICommands.DESTROY_ASSET))
+                {
+                    HandleDestroyAsset(GetMsgData(msg, APICommands.DESTROY_ASSET), id);
+                }
+                else if (msg.StartsWith(APICommands.QUERY_ASSET))
+                {
+                    HandleQueryAsset(GetMsgData(msg, APICommands.QUERY_ASSET), id);
+                }
+                else if (msg.StartsWith(APICommands.ASSET_DATABASE))
+                {
+                    scene.AssetDatabaseRequest(GetMsgData(msg, APICommands.ASSET_DATABASE), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_MOVE))
+                {
+                    scene.SetActionsSystemCanMove(GetMsgData(msg, APICommands.SET_CAN_MOVE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_ROTATE))
+                {
+                    scene.SetActionsSystemCanRotate(GetMsgData(msg, APICommands.SET_CAN_ROTATE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_CROUCH))
+                {
+                    scene.SetActionsSystemCanCrouch(GetMsgData(msg, APICommands.SET_CAN_CROUCH) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_TELEPORT))
+                {
+                    scene.SetActionsSystemCanTeleport(GetMsgData(msg, APICommands.SET_CAN_TELEPORT) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_GRAPPLE))
+                {
+                    scene.SetActionsSystemCanGrapple(GetMsgData(msg, APICommands.SET_CAN_GRAPPLE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_JUMP))
+                {
+                    scene.SetActionsSystemCanJump(GetMsgData(msg, APICommands.SET_CAN_JUMP) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_GRAB))
+                {
+                    scene.SetActionsSystemCanGrab(GetMsgData(msg, APICommands.SET_CAN_GRAB) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_THUMBSTICK))
+                {
+                    scene.SetActionsSystemBlockLeftThumbstick(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_THUMBSTICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_THUMBSTICK))
+                {
+                    scene.SetActionsSystemBlockRightThumbstick(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_THUMBSTICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_PRIMARY))
+                {
+                    scene.SetActionsSystemBlockLeftPrimary(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_PRIMARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_PRIMARY))
+                {
+                    scene.SetActionsSystemBlockRightPrimary(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_PRIMARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_SECONDARY))
+                {
+                    scene.SetActionsSystemBlockLeftSecondary(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_SECONDARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_SECONDARY))
+                {
+                    scene.SetActionsSystemBlockRightSecondary(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_SECONDARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_THUMBSTICK_CLICK))
+                {
+                    scene.SetActionsSystemBlockLeftThumbstickClick(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_THUMBSTICK_CLICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_THUMBSTICK_CLICK))
+                {
+                    scene.SetActionsSystemBlockRightThumbstickClick(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_THUMBSTICK_CLICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_TRIGGER))
+                {
+                    scene.SetActionsSystemBlockLeftTrigger(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_TRIGGER) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_TRIGGER))
+                {
+                    scene.SetActionsSystemBlockRightTrigger(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_TRIGGER) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.GET_PLATFORM))
+                {
+                    scene.GetPlatform(id);
+                }
+                else if (msg.StartsWith(APICommands.GET_DEVICE_INFO))
+                {
+                    scene.GetDeviceInfo(id);
+                }
+                else if (msg.StartsWith(APICommands.SEND_HAPTIC_IMPULSE))
+                {
+                    scene.SendHapticImpulse(GetMsgData(msg, APICommands.SEND_HAPTIC_IMPULSE), id);
+                }
+                else if (msg.StartsWith(APICommands.TELEMETRY))
+                {
+                    scene.data.SendTelemetry(ParseTelemetry(GetMsgData(msg, APICommands.TELEMETRY)));
+                }
+                else
+                {
+                    Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);
+                }
+            }
+            catch (Exception e)
+            {
+                // A handler that threw before answering (a bad id, a short message) left the page's await hanging.
+                Debug.LogWarning("[Banter] Error handling request " + CommandOf(msg) + " (" + id + "): " + e.Message);
+                ReplyError(id, CommandOf(msg) + ": " + e.Message);
+            }
+        }
+        void ParseLegacy(string msg)
+        {
+            // scene.events.OnLegacySendToAframe.Invoke(GetMsgData(msg, APICommands.LEGACY_SEND_TO_AFRAME));
+            // if(msg.StartsWith(APICommands.LEGACY_SEND_TO_AFRAME)) {
+            // scene.events.OnLegacySendToAframe.Invoke(GetMsgData(msg, APICommands.LEGACY_SEND_TO_AFRAME));
+            // }else 
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                UnityAndBanterObject lastSitObject = new UnityAndBanterObject();
+                if (msg.StartsWith(APICommands.LEGACY_LOCK_PLAYER))
+                {
+                    scene.events.OnLegacyPlayerLockChanged.Invoke(true);
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_UNLOCK_PLAYER))
+                {
+                    scene.events.OnLegacyPlayerLockChanged.Invoke(false);
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_SIT_PLAYER))
+                {
+                    lastSitObject = scene.GetObject(int.Parse(GetMsgData(msg, APICommands.LEGACY_SIT_PLAYER)));
+                    scene.events.OnLegacyPlayerSitChanged.Invoke(true, lastSitObject);
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_UNSIT_PLAYER))
+                {
+                    if (lastSitObject.id)
+                    {
+                        scene.events.OnLegacyPlayerSitChanged.Invoke(false, lastSitObject);
+                    }
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_ATTACH_OBJECT))
+                {
+                    scene.LegacySetAttachment(GetMsgData(msg, APICommands.LEGACY_ATTACH_OBJECT));
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_RESET_NETWORK_OBJECT))
+                {
+                    // var syncObject = scene.GetObject(int.Parse(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT)));
+                    // FLEXTODO - Synced object
+                    // scene.events.OnResetNetworkObject.Invoke(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT));
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_DO_I_OWN))
+                {
+                    // FLEXTODO - Synced object
+                    // scene.events.OnDoIOwn.Invoke(GetMsgData(msg, APICommands.LEGACY_DO_I_OWN));
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_REQUEST_OWNERSHIP))
+                {
+                    // FLEXTODO - Synced object
+                    // scene.events.OnRequestOwnership.Invoke(GetMsgData(msg, APICommands.LEGACY_REQUEST_OWNERSHIP));
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_PLAY_AVATAR))
+                {
+                    scene.events.OnLegacyPlayAvatar.Invoke(GetMsgData(msg, APICommands.LEGACY_PLAY_AVATAR));
+                }
+                else if (msg.StartsWith(APICommands.PLAY_AVATAR))
+                {
+                    scene.events.OnPlayAvatar.Invoke(GetMsgData(msg, APICommands.PLAY_AVATAR));
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_SEND_AFRAME_EVENT))
+                {
+                    scene.events.OnSendAframeEvent.Invoke(GetMsgData(msg, APICommands.LEGACY_SEND_AFRAME_EVENT));
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_SET_REFRESH_RATE))
+                {
+                    scene.events.OnRefreshRateChanged.Invoke(NumberFormat.Parse(GetMsgData(msg, APICommands.LEGACY_SET_REFRESH_RATE)));
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_GORILLA_PLAYER))
+                {
+                    scene.events.OnLegacyPlayerGorillaChanged.Invoke(true);
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_UNGORILLA_PLAYER))
+                {
+                    scene.events.OnLegacyPlayerGorillaChanged.Invoke(false);
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_SET_CHILD_COLOR))
+                {
+                    scene.LegacySetChildColor(GetMsgData(msg, APICommands.LEGACY_SET_CHILD_COLOR));
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_SET_VIDEO_URL))
+                {
+                    var parts = GetMsgData(msg, APICommands.LEGACY_SET_VIDEO_URL).Split(MessageDelimiters.PRIMARY, 2);
+                    scene.LegacySetVideoUrl(scene.GetGameObject(int.Parse(parts[0])), parts[1], parts[0]);
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_ENABLE_CONTROLLER_EXTRAS))
+                {
+                    scene.events.OnLegacyControllerExtrasChanged.Invoke();
+                }
+                else if (msg.StartsWith(APICommands.LEGACY_ENABLE_QUATERNION_POSE))
+                {
+                    scene.events.OnLegacyQuaternionPoseChanged.Invoke();
+                }
+                else
+                {
+                    Debug.Log("[Banter] Unknown parse legacy message: " + msg);
+                }
+            }, $"{nameof(BSLink)}.{nameof(ParseLegacy)}"));
+        }
+        void Update()
+        {
+            if (scene == null) return;
+            if (scene.state == SceneState.NOTHING_20S && Time.frameCount % 10 == 0)
+            {
+                scene.loadingManager?.SetLoadProgress("Still Loading... 😬", 0, $"No objects loaded yet, {Mathf.Round(260f - (Time.time - timeoutDisplay))} seconds left...", true);
+            }
+            else if (scene.loading && Time.frameCount % 10 == 0)
+            {
+                // Keep the bar live while the space streams in. Nothing else recomputes progress
+                // during this window — SetLoaded only runs on loadStarted, on domReady, and then
+                // from the poll below, which does not start until SCENE_READY (itself emitted only
+                // after a 3s no-new-objects debounce on the JS side) plus another 2s wait. So the
+                // bar used to sit at 0 for the entire download and then whip to 100 at the end.
+                //
+                // Throttled to every 10th frame: this walks every component, so a per-frame call
+                // would be needless work on a big space. UpdateLoadProgress touches the UI only —
+                // it must not be SetLoaded(), which would drive the load gate off a UI timer.
+                scene.UpdateLoadProgress();
+            }
+        }
+#if BANTER_LINK_DEBUG_LOG
+        //debugging, keep track of how many messages of each command type
+        Dictionary<string, int> linkCommandCounters = new Dictionary<string, int>();
+        DateTimeOffset lastCommandDebugLog = DateTimeOffset.MinValue;
+#endif
+        void HandleMessage(string msg)
+        {
+#if BANTER_LINK_DEBUG_LOG
+            //this is debug stuff here, probably remove it at some point
+            var dbgcmd = msg.Split(MessageDelimiters.PRIMARY)[0];
+
+            if (!linkCommandCounters.TryAdd(dbgcmd, 1))
+            {
+                linkCommandCounters[dbgcmd]++;
+            }
+            if ((DateTimeOffset.Now - lastCommandDebugLog).TotalSeconds > 1)
+            {
+                lastCommandDebugLog = DateTimeOffset.Now;
+                StringBuilder sbLog = new StringBuilder();
+                sbLog.AppendLine("Msg cmd stats:");
+                foreach (var kvp in linkCommandCounters)
+                {
+                    sbLog.Append("\t");
+                    sbLog.Append(kvp.Key);
+                    sbLog.Append(": ");
+                    sbLog.Append((int)kvp.Value);
+                    sbLog.Append('\n');
+                }
+                Debug.Log(sbLog.ToString());
+            }
+            //end of debug stuff
+#endif
+            if (msg.StartsWith(APICommands.SCENE_READY))
+            {
+                Debug.Log("got scene ready");
+            }
+
+            if (msg.StartsWith(APICommands.REQUEST_ID))
+            {
+                var startLength = (APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID).Length;
+                var requestId = msg.Substring(startLength, msg.IndexOf(MessageDelimiters.PRIMARY, startLength) - startLength);
+                ParseRequest(msg.Substring(startLength + requestId.Length + 1), int.Parse(requestId), msg);
+            }
+            else if (msg.StartsWith(APICommands.RESPONSE_ID))
+            {
+                ParseMessageResponse(msg.Substring(APICommands.RESPONSE_ID.Length));
+            }
+            else if (msg.StartsWith(APICommands.LEGACY))
+            {
+                ParseLegacy(msg.Substring(APICommands.LEGACY.Length));
+            }
+            else
+            {
+                ParseCommand(msg);
+            }
+        }
+
+        public void SetupPipe(OraView view, OraManager manager)
+        {
+            // #if UNITY_ANDROID && !UNITY_EDITOR
+            //             pipe = new AndroidPipe();
+            // #else
+            //             pipe = new ElectronPipe(pipeName);
+            // #endif
+
+            scene = BSScene.Instance();
+#if !GREENFIELD_PROJECT
+            // No Banter client in the SDK to attach objects to the local user; emulate the head.
+            SdkAttachments.Install(scene);
+            // Nor its hands: a script lets go through the desktop player's mouse hand.
+            SdkGrabRelease.Install(scene);
+#endif
+            ConnectPipe(view, manager);
+        }
+
+        /// <summary>The pipe and its bridge, for the scene already set (SetupPipe; EditMode tests give their own).</summary>
+        internal void ConnectPipe(OraView view, OraManager manager)
+        {
+            pipe = new BSPipe(this, view, manager);
+            StartBridge();
+            pipe.Start(() =>
+            {
+                Connected?.Invoke(this, EventArgs.Empty);
+            }, msg =>
+            {
+                // Carrier frames and raw strings enter one FIFO. They run here, as Ora delivers them, within this frame's
+                // bridge budget; whatever is left runs at the next EarlyUpdate (BridgePump).
+                bridge.Receive(msg);
+                DrainWithinFrameBudget();
+            });
+        }
+
+        // ------------------------------------------------------------------------------------------------------------
+        // Bridge 2 sessions.
+
+        /// <summary>
+        /// On Android, for Ora's compat channel, which could deliver a page's first messages ahead of its LoadStarted. That
+        /// channel has gone, so this may no longer be needed: taking it out waits for a device check.
+        /// </summary>
+        internal const bool LoadStartedMayTrail =
+#if UNITY_ANDROID && !UNITY_EDITOR
+            true;
+#else
+            false;
+#endif
+
+        /// <summary>
+        /// The M3 families this client offers pages (BridgeFamily.Fence, Delta, Announce, Destroyed), read once at start
+        /// from --bs-bridge-families=fence,delta,announce,destroyed (or all) and, in the editor, the EditorPrefs string
+        /// BS.Bridge.Families. None by default: pages then see exactly what they saw before these families.
+        /// </summary>
+        internal static uint BridgeFamilies;
+
+        internal const string BridgeFamiliesArgument = "--bs-bridge-families=";
+        internal const string BridgeFamiliesEditorPref = "BS.Bridge.Families";
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ReadBridgeFamilies()
+        {
+            string list = null;
+            try
+            {
+                foreach (var a in Environment.GetCommandLineArgs())
+                    if (a.StartsWith(BridgeFamiliesArgument, StringComparison.OrdinalIgnoreCase)) list = a.Substring(BridgeFamiliesArgument.Length);
+            }
+            catch (Exception) { /* no command line */ }
+#if UNITY_EDITOR
+            if (list == null) list = UnityEditor.EditorPrefs.GetString(BridgeFamiliesEditorPref, "");
+#endif
+            BridgeFamilies = ParseBridgeFamilies(list);
+            if (BridgeFamilies != 0) LogLine.Do(LogLine.banterColor, LogTag.Banter, "[Bridge] Offering families " + BridgeFamilies + " (" + list + ").");
+        }
+
+        /// <summary>"fence,delta,announce,destroyed" or "all" (any case, commas or spaces) as BridgeFamily bits; unknown names are ignored.</summary>
+        internal static uint ParseBridgeFamilies(string list)
+        {
+            uint families = 0;
+            if (string.IsNullOrEmpty(list)) return 0;
+            foreach (var raw in list.Split(new[] { ',', ' ', ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                switch (raw.Trim().ToLowerInvariant())
+                {
+                    case "fence": families |= BridgeFamily.Fence; break;
+                    case "delta": families |= BridgeFamily.Delta; break;
+                    case "announce": families |= BridgeFamily.Announce; break;
+                    case "destroyed": families |= BridgeFamily.Destroyed; break;
+                    case "all": families |= BridgeFamily.Fence | BridgeFamily.Pushed; break;
+                }
+            }
+            return families;
+        }
+
+        void StartBridge()
+        {
+            var options = new BridgeViewOptions
+            {
+                LoadStartedMayTrail = LoadStartedMayTrail,
+                Families = BridgeFamilies,
+                // One cap for fragments being reassembled across every view.
+                ReassemblyBudget = BridgeReassemblyBudget,
+                Log = m => LogLine.Do(LogLine.banterColor, LogTag.Banter, m),
+            };
+            bridge = new BridgeView(new BridgeSink(pipe), new BridgeDispatcher(this), options, BridgeNowMs);
+            // Anything queued before the pipe existed goes first, in order.
+            foreach (var queued in messages) bridge.Send(queued);
+            messages.Clear();
+            BridgePump.Register(this);
+        }
+
+        static readonly long bridgeStartTicks = System.Diagnostics.Stopwatch.GetTimestamp();
+        static long BridgeNowMs() => (System.Diagnostics.Stopwatch.GetTimestamp() - bridgeStartTicks) * 1000 / System.Diagnostics.Stopwatch.Frequency;
+
+        /// <summary>Main-thread time per frame for decoding and running page ops: more while the space loads.</summary>
+        internal static double BridgeDrainBudgetMs = 4, BridgeDrainLoadingBudgetMs = 12;
+
+        /// <summary>Fragments in reassembly, all views together (bytes; text counts 2 per UTF-16 unit).</summary>
+        static BridgeReassembler.Budget BridgeReassemblyBudget = new BridgeReassembler.Budget(BridgeWire.MaxMessage);
+
+        // Statics survive play mode when domain reload is off: each play session starts with an empty budget (a link
+        // from the last one can't charge it).
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetBridgeReassemblyBudget() => BridgeReassemblyBudget = new BridgeReassembler.Budget(BridgeWire.MaxMessage);
+
+        int bridgeBudgetFrame = -1;
+        long bridgeBudgetUsedTicks;
+
+        /// <summary>BridgePump, EarlyUpdate: run what is left from last frame, within the budget, then the session timers.</summary>
+        internal void BridgeDrain()
+        {
+            if (bridge == null) return;
+            DrainWithinFrameBudget();
+            bridge.Tick();
+            // DESTROYED: objects and components destroyed without their OnDestroy, a few each frame.
+            if (scene != null && bridge.Pushes(BridgeFamily.Destroyed)) scene.SweepDestroyed(DestroyedSweepPerFrame);
+        }
+
+        /// <summary>DESTROYED's sweep: entries of each table looked at per frame.</summary>
+        internal static int DestroyedSweepPerFrame = 64;
+
+        /// <summary>Drains while this frame's budget (shared by the inline drains in the Ora callback) lasts.</summary>
+        void DrainWithinFrameBudget()
+        {
+            int frame = Time.frameCount;
+            if (frame != bridgeBudgetFrame) { bridgeBudgetFrame = frame; bridgeBudgetUsedTicks = 0; }
+            double budgetMs = scene != null && scene.loading ? BridgeDrainLoadingBudgetMs : BridgeDrainBudgetMs;
+            long limit = (long)(budgetMs * System.Diagnostics.Stopwatch.Frequency / 1000);
+            if (bridgeBudgetUsedTicks >= limit) return;
+            long start = System.Diagnostics.Stopwatch.GetTimestamp();
+            long used = bridgeBudgetUsedTicks;
+            bridge.Drain(int.MaxValue, () => used + (System.Diagnostics.Stopwatch.GetTimestamp() - start) > limit);
+            bridgeBudgetUsedTicks += System.Diagnostics.Stopwatch.GetTimestamp() - start;
+        }
+
+        /// <summary>BridgePump, PostLateUpdate: send this frame's queue (replies, events, Unity requests) in order.</summary>
+        internal void BridgeFlush() => bridge?.Flush();
+
+        sealed class BridgeSink : IBridgeSink
+        {
+            readonly BSPipe pipe;
+            public BridgeSink(BSPipe pipe) { this.pipe = pipe; }
+            public void Post(string data) => pipe.Send(data);
+        }
+
+        sealed class BridgeDispatcher : IBridgeDispatcher
+        {
+            readonly BSLink link;
+            bool loggedTypedOp;
+            public BridgeDispatcher(BSLink link) { this.link = link; }
+
+            public void DispatchText(BridgeSession session, string text)
+            {
+                try
+                {
+                    link.HandleMessage(text);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Exception handling a message in a batch, message: {text}");
+                    Debug.LogException(ex);
+                }
+            }
+
+            public void DispatchOp(BridgeSession session, uint opcode, ReadOnlySpan<byte> payload)
+            {
+                // M1 defines no typed families (they come with the lock in M3).
+                if (loggedTypedOp) return;
+                loggedTypedOp = true;
+                Debug.LogWarning("[Bridge] Typed op " + opcode + " has no handler yet; ignored.");
+            }
+        }
+
+
+        Dictionary<int, Action<string>> messageHandlers = new Dictionary<int, Action<string>>();
+        int msgCount;
+        private void ParseMessageResponse(string msg)
+        {
+            var parts = msg.Split(MessageDelimiters.PRIMARY, 2);
+            if (messageHandlers.TryGetValue(int.Parse(parts[0]), out var handler))
+            {
+                handler?.Invoke(parts[1]);
+            }
+        }
+
+        public void Send(string data, Action<string> callback = null)
+        {
+            var id = ++msgCount;
+            if (msgCount > 99999999)
+            {
+                msgCount = 0; // Reset to avoid overflow
+            }
+            var message = $"{APICommands.RESPONSE_ID}{id}{MessageDelimiters.PRIMARY}{data}";
+            messageHandlers[id] = callback;
+            // The same single queue as everything else, so it can't overtake queued replies.
+            Send(message);
+        }
+
+        // What was sent before the pipe existed; StartBridge sends it first, in order.
+        List<string> messages = new List<string>();
+        public void Send(string msg)
+        {
+            if (bridge == null)
+            {
+                messages.Add(msg);
+                return;
+            }
+            // The bridge's per-document ledger sends each reply once and only to the document that asked (BridgeContext,
+            // which queued work carries too).
+            bridge.Send(msg);
+        }
+
+        /// <summary>
+        /// Navigate the space browser and wait for the page to declare SCENE_READY (or fail —
+        /// LOAD_FAILED sorts above SCENE_READY). <paramref name="abortWhen"/> lets the caller stop
+        /// waiting early: without it a page that never reaches SCENE_READY (a 404, a plain web
+        /// page, a DNS failure whose error-page redirect then overwrote LOAD_FAILED with DOM_READY)
+        /// parks this await forever.
+        /// </summary>
+        public async Task LoadUrl(string url, Func<bool> abortWhen = null)
+        {
+            LogLine.Do(LogLine.banterColor, LogTag.Banter, "Loading URL: " + DescribeUrlForLog(url));
+            pipe.view.LoadUrl(url);
+            // pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
+            scene.state = SceneState.NONE;
+            // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
+            await new WaitUntil(() => scene.state >= SceneState.SCENE_READY || (abortWhen?.Invoke() ?? false));
+            // LogLine.Do(LogLine.banterColor, LogTag.Banter, "After WaitUntil SCENE_READY");
+            scene.SetLoaded();
+        }
+
+        /// <summary>data: URLs (the missing-world fallback page) are kilobytes of base64 — keep the log line readable.</summary>
+        public static string DescribeUrlForLog(string url)
+        {
+            if (url != null && url.StartsWith("data:") && url.Length > 60)
+            {
+                return url.Substring(0, 40) + "...(" + url.Length + " chars)";
+            }
+            return url;
+        }
+
+
+        public void OnTransformUpdate(int oid, List<BSComponentPropertyUpdate> updates)
+        {
+            StringBuilder updatesString = new StringBuilder();
+            if (updates.Count < 1)
+            {
+                return;
+            }
+            // DELTA (when this document reads it): each watched value joins the next DELTA, the newest per property.
+            var b = bridge;
+            if (b != null && b.Pushes(BridgeFamily.Delta))
+            {
+                uint stamp = b.AppliedMark;
+                foreach (var update in updates)
+                {
+                    var part = TransformDeltaText(update);
+                    if (part != null) b.SendDelta(oid, 0, (int)ComponentType.Transform, (int)update.name, part, stamp);
+                }
+                return;
+            }
+            foreach (var update in updates)
+            {
+                switch (update.name)
+                {
+                    case PropertyName.position:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
+                            break;
+                        }
+                    case PropertyName.localPosition:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
+                            break;
+                        }
+                    case PropertyName.eulerAngles:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
+                            break;
+                        }
+                    case PropertyName.localEulerAngles:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
+                            break;
+                        }
+                    case PropertyName.rotation:
+                        {
+                            var value = (Quaternion)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.w));
+                            break;
+                        }
+                    case PropertyName.localRotation:
+                        {
+                            var value = (Quaternion)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.w));
+                            break;
+                        }
+                    case PropertyName.localScale:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
+                            break;
+                        }
+                }
+            }
+            Send(APICommands.EVENT + APICommands.TRANSFORM_UPDATED + MessageDelimiters.PRIMARY + oid + updatesString.ToString());
+        }
+
+        /// <summary>
+        /// One watched value as TRANSFORM_UPDATED writes it ("prop|x|y|z", a quaternion with |w), without its leading
+        /// delimiter; null for a property that event never carries.
+        /// </summary>
+        internal static string TransformDeltaText(BSComponentPropertyUpdate update)
+        {
+            string t = MessageDelimiters.TERTIARY;
+            switch (update.name)
+            {
+                case PropertyName.position:
+                case PropertyName.localPosition:
+                case PropertyName.eulerAngles:
+                case PropertyName.localEulerAngles:
+                case PropertyName.localScale:
+                {
+                    var v = (Vector3)update.value;
+                    return (int)update.name + t + NumberFormat.Format(v.x) + t + NumberFormat.Format(v.y) + t + NumberFormat.Format(v.z);
+                }
+                case PropertyName.rotation:
+                case PropertyName.localRotation:
+                {
+                    var q = (Quaternion)update.value;
+                    return (int)update.name + t + NumberFormat.Format(q.x) + t + NumberFormat.Format(q.y) + t + NumberFormat.Format(q.z) + t + NumberFormat.Format(q.w);
+                }
+                default:
+                    return null;
+            }
+        }
+
+        public void OnSendVersion(string versionData)
+        {
+            Send(APICommands.EVENT + APICommands.BANTER_VERSION + MessageDelimiters.PRIMARY + versionData);
+        }
+        public void OnUnitySceneLoaded()
+        {
+            scene.state = SceneState.UNITY_READY;
+            LogLine.Do(LogLine.banterColor, LogTag.Banter, "Unity Scene Loaded.");
+            Send(APICommands.EVENT + APICommands.UNITY_LOADED + MessageDelimiters.PRIMARY);
+#if !GREENFIELD_PROJECT
+            // In the SDK the users (the local player, the emulated remotes) are added at startup, before
+            // this page exists, so their joins went to no page and the page never learnt who is here:
+            // no local user, and anything waiting for one (presence, attachments to "me") stalled until
+            // it gave up. Greenfield announces users after the space loads, so it doesn't need this.
+            // Once per page: this runs twice per load, and the page warns about repeated joins. A network
+            // host (BSNetworkHost) replays its users itself when the scene is ready, as Greenfield does.
+            if (!usersAnnounced && !BSNetworkHost.Active)
+            {
+                usersAnnounced = true;
+                foreach (var user in scene.users.ToArray())
+                    OnUserJoined(user);
+            }
+#endif
+        }
+        public void OnMonoBehaviourLifeCycle(int cid, BSMonoBehaviourLifeCycle lifeCycle)
+        {
+            Send(APICommands.EVENT + APICommands.MONO_BEHAVIOUR + MessageDelimiters.PRIMARY + cid + MessageDelimiters.PRIMARY + (int)lifeCycle);
+        }
+        public void OnVoiceStarted()
+        {
+            Send(APICommands.EVENT + APICommands.VOICE_STARTED + MessageDelimiters.PRIMARY);
+        }
+        public void OnAiModel(string glb)
+        {
+            EventBus.Trigger("OnAiModel", new CustomEventArgs("", new object[] { glb }));
+            Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + glb);
+        }
+        public void OnAiImage(string image)
+        {
+            EventBus.Trigger("OnAiImage", new CustomEventArgs("", new object[] { image }));
+            Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + image);
+        }
+        public void OnBase64ToCDN(long image)
+        {
+            EventBus.Trigger("OnBase64CDNLink", new CustomEventArgs("", new object[] { image }));
+            Send(APICommands.EVENT + APICommands.BASE_64_TO_CDN_RECV + MessageDelimiters.PRIMARY + image);
+        }
+        public void OnSelectFile(SelectFileType type, string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            if (bytes.Length > 1048576 * 4)
+            {
+                EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { "too-large-over-4mb", type }));
+                Send(APICommands.EVENT + APICommands.SELECT_FILE_RECV + MessageDelimiters.PRIMARY + "too-large-over-4mb" + MessageDelimiters.SECONDARY + (int)type);
+                return;
+            }
+            string file = Convert.ToBase64String(bytes);
+            EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { file, type }));
+            Send(APICommands.EVENT + APICommands.SELECT_FILE_RECV + MessageDelimiters.PRIMARY + file + MessageDelimiters.SECONDARY + (int)type);
+        }
+        public void OnTranscription(string message, string id)
+        {
+            EventBus.Trigger("OnSTT", new CustomEventArgs(id, new object[] { message }));
+            Send(APICommands.EVENT + APICommands.SEND_TRANSCRIPTION + MessageDelimiters.PRIMARY + id + MessageDelimiters.SECONDARY + message);
+        }
+        /// <summary>
+        /// The world (space page) browser painted a new texture: its first frame, or a resize replaced
+        /// it. Visual scripting gets it through On World Browser Texture; materials and the page reach it
+        /// as the <see cref="WORLD_BROWSER_TEXTURE"/> asset reference.
+        /// </summary>
+        public void OnWorldBrowserTexture(Texture2D texture)
+        {
+            if (texture == null) return;
+            EventBus.Trigger("OnWorldBrowserTexture", new CustomEventArgs(WORLD_BROWSER_TEXTURE, new object[] { texture }));
+            BSAssetRegistry.Instance.SetAsset(WORLD_BROWSER_TEXTURE, texture, AssetType.Texture2D, "browser:world");
+        }
+
+        public void OnFullSpaceState(string json)
+        {
+            Send(APICommands.EVENT + APICommands.FULL_SPACE_STATE + MessageDelimiters.PRIMARY + json);
+        }
+
+        public void OnSpaceStateChanged(string prop, string newValue, string oldValue, bool isPublic)
+        {
+            Send(APICommands.EVENT + APICommands.SPACE_STATE_CHANGED + MessageDelimiters.PRIMARY + prop + MessageDelimiters.SECONDARY + newValue + MessageDelimiters.SECONDARY + oldValue + MessageDelimiters.SECONDARY + (isPublic ? "1" : "0"));
+        }
+
+        public void OnUserStateChanged(string data)
+        {
+            Send(APICommands.EVENT + APICommands.USER_STATE_CHANGED + MessageDelimiters.PRIMARY + data);
+        }
+
+        // The JSON surface. Callers pass an ALREADY base64-encoded payload so serialization stays
+        // with whoever owns the data, and so nothing here can meet an unescaped bus delimiter.
+
+        public void OnFullSpaceStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.FULL_SPACE_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnSpaceStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.SPACE_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnFullWorldStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.FULL_WORLD_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnWorldStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.WORLD_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnUserStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.USER_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnOneShot(string data, string fromId, bool fromAdmin)
+        {
+            // Another user's text: WireText keeps any delimiter in it from cutting the data or the batch.
+            // The page first: the event is one-shot, and a graph that throws must not cost the page its copy.
+            Send(APICommands.EVENT + APICommands.ONE_SHOT_RECIEVED + MessageDelimiters.PRIMARY + fromId + MessageDelimiters.SECONDARY + (fromAdmin ? "1" : "0") + MessageDelimiters.SECONDARY + WireText.Encode(data));
+            EventBus.Trigger("OnOneShot", new CustomEventArgs(fromId, new object[] { data }));
+        }
+
+        public void OnUserJoined(UserData user)
+        {
+            Send(APICommands.EVENT + APICommands.USER_JOINED + MessageDelimiters.PRIMARY + user.uid + MessageDelimiters.SECONDARY + WireText.Encode(user.name) + MessageDelimiters.SECONDARY + (user.isLocal ? "1" : "0") + MessageDelimiters.SECONDARY + user.id + MessageDelimiters.SECONDARY + user.color + MessageDelimiters.SECONDARY + (user.isSpaceAdmin ? "1" : "0"));
+        }
+
+        public void OnUserLeft(UserData user)
+        {
+            Send(APICommands.EVENT + APICommands.USER_LEFT + MessageDelimiters.PRIMARY + user.uid + MessageDelimiters.SECONDARY + WireText.Encode(user.name) + MessageDelimiters.SECONDARY + (user.isLocal ? "1" : "0") + MessageDelimiters.SECONDARY + user.id + MessageDelimiters.SECONDARY + user.color);
+        }
+
+        public void OnClick(GameObject obj, Vector3 point, Vector3 normal)
+        {
+            Send(APICommands.EVENT + APICommands.CLICKED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.z));
+        }
+
+        public void OnWorldOption(GameObject obj, bool isOn)
+        {
+            Send(APICommands.EVENT + APICommands.WORLD_OPTION_PRESSED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + (isOn ? "1" : "0"));
+        }
+
+        public void OnGrab(GameObject obj, Vector3 point, HandSide side)
+        {
+            Send(APICommands.EVENT + APICommands.GRABBED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + (int)side);
+        }
+
+        public void OnRelease(GameObject obj, HandSide side)
+        {
+            Send(APICommands.EVENT + APICommands.RELEASED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + (int)side);
+        }
+
+        public void OnButtonPressed(ButtonType button, HandSide side)
+        {
+            Send(APICommands.EVENT + APICommands.BUTTON_PRESSED + MessageDelimiters.PRIMARY + (int)button + MessageDelimiters.SECONDARY + (int)side);
+        }
+
+        public void OnButtonReleased(ButtonType button, HandSide side)
+        {
+            Send(APICommands.EVENT + APICommands.BUTTON_RELEASED + MessageDelimiters.PRIMARY + (int)button + MessageDelimiters.SECONDARY + (int)side);
+        }
+
+        public void OnControllerAxisUpdate(HandSide hand, float x, float y)
+        {
+            Send(APICommands.EVENT + APICommands.CONTROLLER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + NumberFormat.Format(x, "F3") + MessageDelimiters.SECONDARY + NumberFormat.Format(y, "F3"));
+        }
+
+        public void OnPoseUpdate(Transform head, Transform leftHand, Transform rightHand)
+        {
+            Send(APICommands.EVENT + APICommands.POSE_UPDATE + MessageDelimiters.PRIMARY +
+            NumberFormat.Format(head.position.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.position.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.position.z) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(head.rotation.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.rotation.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.rotation.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.rotation.w) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(leftHand.position.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.position.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.position.z) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(leftHand.rotation.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.rotation.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.rotation.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.rotation.w) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(rightHand.position.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.position.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.position.z) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(rightHand.rotation.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.rotation.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.rotation.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.rotation.w));
+        }
+        public void OnTriggerAxisUpdate(HandSide hand, float value)
+        {
+            Send(APICommands.EVENT + APICommands.TRIGGER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + NumberFormat.Format(value, "F3"));
+        }
+        public void OnAframeTrigger(string data)
+        {
+            Send(APICommands.EVENT + APICommands.AFRAME_TRIGGER + MessageDelimiters.PRIMARY + data);
+        }
+        public void OnMenuBrowserMessage(string data)
+        {
+            Send(APICommands.EVENT + APICommands.MENU_BROWSER_MESSAGE + MessageDelimiters.PRIMARY + WireText.Encode(data));
+        }
+        public void OnReceiveBrowserMessage(BSBrowser browser, string message)
+        {
+            // Text from any web page: WireText keeps any delimiter in it from cutting the message or the batch.
+            // The page first, as with a one-shot.
+            Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + BSScene.UnityId(browser.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(message));
+            EventBus.Trigger("OnReceiveBrowserMessage", new CustomEventArgs("browser-message", new object[] { message }));
+        }
+        public void OnKeyPress(KeyCode key)
+        {
+            Send(APICommands.EVENT + APICommands.KEY + MessageDelimiters.PRIMARY + (int)key);
+        }
+        public void OnKeyRelease(KeyCode key)
+        {
+            Send(APICommands.EVENT + APICommands.KEY_RELEASE + MessageDelimiters.PRIMARY + (int)key);
+        }
+
+        public void _OnCollisionEnter(GameObject obj, Collision collision)
+        {
+            ContactPoint[] contact = new ContactPoint[1];
+            collision.GetContacts(contact);
+            var userData = scene.GetUserFromCollider(collision.collider);
+            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.name) + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+        }
+
+        public void _OnCollisionStay(GameObject obj, Collision collision)
+        {
+            ContactPoint[] contact = new ContactPoint[1];
+            collision.GetContacts(contact);
+            Send(APICommands.EVENT + APICommands.COLLISION_STAY + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.name));
+        }
+
+        public void _OnCollisionExit(GameObject obj, Collision collision)
+        {
+            var userData = scene.GetUserFromCollider(collision.collider);
+            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.name) + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+        }
+
+        public void _OnTriggerEnter(GameObject obj, Collider collider)
+        {
+            var userData = scene.GetUserFromCollider(collider);
+            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.name) + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+        }
+
+        public void _OnTriggerStay(GameObject obj, Collider collider)
+        {
+            Send(APICommands.EVENT + APICommands.TRIGGER_STAY + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.name));
+        }
+
+        public void _OnTriggerExit(GameObject obj, Collider collider)
+        {
+            var userData = scene.GetUserFromCollider(collider);
+            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.name) + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+        }
+
+        public void CheckPipe()
+        {
+            // if (!pipe.GetIsConnected())
+            // {
+            //     SetupPipe();
+            // }
+        }
+
+        #region Asset System Handlers
+
+        /// <summary>The asset commands' id when they came without one, as the page sends them: nothing to answer.</summary>
+        const int NoRequest = -1;
+
+        // What the current page asked for, loading or loaded. Only that page can name these ids, so they leave with it.
+        readonly HashSet<string> pageAssets = new HashSet<string>();
+
+        void ReleasePageAssets()
+        {
+            foreach (var assetId in pageAssets) BSAssetRegistry.Instance.UnregisterAsset(assetId);
+            pageAssets.Clear();
+        }
+
+        /// <summary>
+        /// Handle CREATE_ASSET command from JavaScript
+        /// Format: assetId§assetType§url§tag§...additional properties
+        /// </summary>
+        private void HandleCreateAsset(string data, int reqId)
+        {
+            var parts = data.Split(MessageDelimiters.SECONDARY);
+            try
+            {
+                if (parts.Length < 2)
+                {
+                    Debug.LogWarning($"Invalid CREATE_ASSET message format: {data}");
+                    RefuseAsset(parts[0], "Invalid CREATE_ASSET message", reqId);
+                    return;
+                }
+
+                string assetId = parts[0];
+                AssetType assetType = (AssetType)int.Parse(parts[1]);
+                string url = parts.Length > 2 ? WireText.Decode(parts[2]) : null;
+                string tag = parts.Length > 3 ? WireText.Decode(parts[3]) : null;
+
+                // An id names one asset, for good: a page's ids are new, and its own.
+                if (!BSAssetKey.IsPageId(assetId) || pageAssets.Contains(assetId) || BSAssetRegistry.Instance.Database.Find(assetId) != null)
+                {
+                    Debug.LogWarning($"Asset id can't be used: {assetId}");
+                    RefuseAsset(assetId, "This asset id can't be used", reqId);
+                    return;
+                }
+                if (pageAssets.Count >= BSAssetDatabase.MaxScriptEntries)
+                {
+                    RefuseAsset(assetId, BSAssetDatabase.WorldFull, reqId);
+                    return;
+                }
+                pageAssets.Add(assetId);
+
+                // Create asset based on type
+                switch (assetType)
+                {
+                    case AssetType.Texture2D:
+                        CreateTextureAsset(assetId, url, tag);
+                        break;
+                    case AssetType.AudioClip:
+                        CreateAudioClipAsset(assetId, url, tag);
+                        break;
+                    case AssetType.Material:
+                        CreateMaterialAsset(assetId, url, tag);
+                        break;
+                    default:
+                        Debug.LogWarning($"Asset type {assetType} can't be created from a script");
+                        FailAsset(assetId, $"{assetType} assets can't be created from a script");
+                        break;
+                }
+                if (reqId != NoRequest) Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Error handling CREATE_ASSET: {ex.Message}");
+                RefuseAsset(parts[0], ex.Message, reqId);
+            }
+        }
+
+        // A failed asset holds nothing, so it stops counting against the page.
+        void FailAsset(string assetId, string reason)
+        {
+            pageAssets.Remove(assetId);
+            BSAssetRegistry.Instance.MarkAssetFailed(assetId, reason);
+        }
+
+        /// <summary>
+        /// The page's waitForReady ends on the failure; a request needs its answer as well. A world's bad asset is the
+        /// page's to report, so these logs are warnings: an error would open the client's error panel for every player.
+        /// </summary>
+        void RefuseAsset(string assetId, string reason, int reqId)
+        {
+            if (!string.IsNullOrEmpty(assetId)) BSAssetRegistry.Instance.MarkAssetFailed(assetId, reason);
+            if (reqId != NoRequest) ReplyError(reqId, APICommands.CREATE_ASSET + ": " + reason);
+        }
+
+        /// <summary>
+        /// Handle DESTROY_ASSET command from JavaScript
+        /// Format: assetId
+        /// </summary>
+        private void HandleDestroyAsset(string data, int reqId)
+        {
+            try
+            {
+                string assetId = data.Trim();
+                // A download's object stays: it is shared through Get's cache, which owns it. A Material goes with its entry.
+                if (pageAssets.Remove(assetId)) BSAssetRegistry.Instance.UnregisterAsset(assetId);
+                if (reqId != NoRequest) Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error handling DESTROY_ASSET: {ex.Message}");
+                if (reqId != NoRequest) ReplyError(reqId, APICommands.DESTROY_ASSET + ": " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Handle QUERY_ASSET command from JavaScript
+        /// Format: assetId
+        /// </summary>
+        private void HandleQueryAsset(string data, int reqId)
+        {
+            try
+            {
+                string assetId = data.Trim();
+                var metadata = BSAssetRegistry.Instance.GetMetadata(assetId);
+
+                if (metadata.HasValue)
+                {
+                    var meta = metadata.Value;
+                    var response = $"{APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId}{MessageDelimiters.PRIMARY}" +
+                                 $"{assetId}{MessageDelimiters.SECONDARY}" +
+                                 $"{(int)meta.type}{MessageDelimiters.SECONDARY}" +
+                                 $"{WireText.Encode(meta.url ?? "")}{MessageDelimiters.SECONDARY}" +
+                                 $"{(meta.loaded ? "1" : "0")}{MessageDelimiters.SECONDARY}" +
+                                 $"{meta.memorySize}{MessageDelimiters.SECONDARY}" +
+                                 $"{WireText.Encode(meta.tag ?? "")}";
+
+                    Send(response);
+                }
+                else
+                {
+                    ReplyError(reqId, APICommands.QUERY_ASSET + ": no asset " + assetId);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error handling QUERY_ASSET: {ex.Message}");
+                ReplyError(reqId, APICommands.QUERY_ASSET + ": " + ex.Message);
+            }
+        }
+
+        private async void CreateTextureAsset(string assetId, string url, string tag)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                Debug.LogWarning($"Cannot create texture asset without URL: {assetId}");
+                FailAsset(assetId, "No URL provided");
+                return;
+            }
+            var problem = PageUrl.Problem(url);
+            if (problem != null)
+            {
+                Debug.LogWarning($"Cannot create texture asset from this address: {assetId}");
+                FailAsset(assetId, problem);
+                return;
+            }
+
+            try
+            {
+                Debug.Log($"Loading texture asset: {assetId} from {url}");
+
+                // Load texture from URL using existing Get utility, in turn with the world's other downloads
+                var database = BSAssetRegistry.Instance.Database;
+                await database.EnterDownload();
+                Texture2D texture;
+                try
+                {
+                    texture = await Get.Texture(url);
+                }
+                finally
+                {
+                    database.LeaveDownload();
+                }
+
+                if (texture == null)
+                {
+                    throw new Exception("Texture loading returned null");
+                }
+
+                // Destroyed, or its page has gone, while it loaded.
+                if (!pageAssets.Contains(assetId)) return;
+
+                // Under the page's id: that's what the page and any BSMaterial hold. Also tells the page it loaded.
+                BSAssetRegistry.Instance.SetAsset(assetId, texture, AssetType.Texture2D, tag, url);
+
+                Debug.Log($"Successfully loaded texture asset: {assetId} ({texture.width}x{texture.height})");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to create texture asset {assetId}: {ex.Message}");
+                FailAsset(assetId, ex.Message);
+            }
+        }
+
+        private async void CreateAudioClipAsset(string assetId, string url, string tag)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                Debug.LogWarning($"Cannot create audio clip asset without URL: {assetId}");
+                FailAsset(assetId, "No URL provided");
+                return;
+            }
+            var problem = PageUrl.Problem(url);
+            if (problem != null)
+            {
+                Debug.LogWarning($"Cannot create audio clip asset from this address: {assetId}");
+                FailAsset(assetId, problem);
+                return;
+            }
+
+            try
+            {
+                Debug.Log($"Loading audio clip asset: {assetId} from {url}");
+
+                // Load audio from URL using existing Get utility, in turn with the world's other downloads
+                var database = BSAssetRegistry.Instance.Database;
+                await database.EnterDownload();
+                AudioClip audioClip;
+                try
+                {
+                    audioClip = await Get.Audio(url);
+                }
+                finally
+                {
+                    database.LeaveDownload();
+                }
+
+                if (audioClip == null)
+                {
+                    throw new Exception("Audio loading returned null");
+                }
+
+                // Destroyed, or its page has gone, while it loaded.
+                if (!pageAssets.Contains(assetId)) return;
+
+                // Under the page's id, as with a texture: a BSAudioSource plays it by that id.
+                BSAssetRegistry.Instance.SetAsset(assetId, audioClip, AssetType.AudioClip, tag, url);
+
+                Debug.Log($"Successfully loaded audio clip asset: {assetId} ({audioClip.length}s)");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to create audio clip asset {assetId}: {ex.Message}");
+                FailAsset(assetId, ex.Message);
+            }
+        }
+
+        private void CreateMaterialAsset(string assetId, string url, string tag)
+        {
+            try
+            {
+                // Create a new material
+                var material = new Material(BSShaderResolver.Find("Standard"));
+                BSAssetRegistry.Instance.SetAsset(assetId, material, AssetType.Material, tag, url);
+                BSAssetRegistry.Instance.OwnAsset(assetId);
+
+                Debug.Log($"Created material asset: {assetId}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to create material asset {assetId}: {ex.Message}");
+                FailAsset(assetId, ex.Message);
+            }
+        }
+
+        #endregion
+
+        #region Legacy stuff
+        public void ToggleDevTools(bool open)
+        {
+            pipe.view.ToggleDevTools(open);
+        }
+        public void HideDevTools()
+        {
+            pipe.Send(APICommands.HIDE_DEV_TOOLS);
+        }
+        public void Reload()
+        {
+            pipe.Send(APICommands.RELOAD);
+        }
+        public void LegacySendToAframe(string msg)
+        {
+            Send(APICommands.LEGACY_SEND_TO_AFRAME + MessageDelimiters.PRIMARY + msg);
+        }
+        #endregion
+    }
+}

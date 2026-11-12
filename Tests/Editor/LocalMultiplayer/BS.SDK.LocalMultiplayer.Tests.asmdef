@@ -1,0 +1,48 @@
+{
+    "name": "BS.SDK.LocalMultiplayer.Tests",
+    "rootNamespace": "BS.LocalMultiplayer.Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "BS.SDK",
+        "BS.SDK.LocalMultiplayer",
+        "BS.SDK.LocalMultiplayer.Editor",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "!GREENFIELD_PROJECT",
+        "!BANTER_FLEX",
+        "BS_ORA_RELAY"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.sidequest.ora",
+            "expression": "0.1.0",
+            "define": "BS_ORA_RELAY"
+        },
+        {
+            "name": "com.sidequest.flexabody",
+            "expression": "0.0.1",
+            "define": "BANTER_FLEX"
+        },
+        {
+            "name": "com.unity.multiplayer.playmode",
+            "expression": "2.0.0",
+            "define": "BANTER_MPPM"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -4,7 +4,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class Post{
+public class Post
+{
 
     public static async Task<string> Json<T>(string url, T postData, Dictionary<string, string> headers = null)
     {

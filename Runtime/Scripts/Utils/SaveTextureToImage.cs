@@ -3,16 +3,18 @@ using System;
 using System.IO;
 using UnityEngine;
 
-public class SaveTextureToImage{
- public enum SaveTextureFileFormat
-   {
-       EXR, JPG, PNG, TGA
+public class SaveTextureToImage
+{
+    public enum SaveTextureFileFormat
+    {
+        EXR, JPG, PNG, TGA
     };
     public static byte[] Do(Texture source,
         int width = -1,
         int height = -1,
         SaveTextureFileFormat fileFormat = SaveTextureFileFormat.JPG,
-        int jpgQuality = 95){
+        int jpgQuality = 95)
+    {
         if (!(source is Texture2D || source is RenderTexture))
         {
             return null;
@@ -54,6 +56,6 @@ public class SaveTextureToImage{
         UnityEngine.Object.Destroy(tempTex);
 
         return encoded;
-        
+
     }
 }

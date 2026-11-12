@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Data.Common;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get User State")]
     [UnitShortTitle("User State")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUserState : Unit
     {
         [DoNotSerialize]
@@ -27,27 +26,34 @@ namespace Banter.VisualScripting
         {
             idOrName = ValueInput("id, uid, or name", string.Empty);
 
-            userPosition = ValueOutput("Position", (f) => GetUserDataTransform(f).position);
-            userRotation = ValueOutput("Rotation", (f) => GetUserDataTransform(f).rotation);
+            // Zero/identity for a user who isn't there (yet), as Get Local User State does.
+            userPosition = ValueOutput("Position", (f) => { var t = GetUserDataTransform(f); return t != null ? t.position : Vector3.zero; });
+            userRotation = ValueOutput("Rotation", (f) => { var t = GetUserDataTransform(f); return t != null ? t.rotation : Quaternion.identity; });
         }
+
+        // Names already reported, so a node pulled every frame logs a missing user once, not 72 times a second.
+        [DoNotSerialize]
+        readonly System.Collections.Generic.HashSet<string> reportedMissing = new System.Collections.Generic.HashSet<string>();
 
         private Transform GetUserDataTransform(Flow f)
         {
             var value = f.GetValue<string>(idOrName);
-            var data = BanterScene.Instance().users.FirstOrDefault(user => user.id == value || user.name == value || user.uid == value);
+            var data = BSScene.Instance().users.FirstOrDefault(user => user.id == value || user.name == value || user.uid == value);
 
             if (data == null)
             {
-                LogLine.Err("User not found: " + value);
+                if (reportedMissing.Add(value ?? "")) LogLine.Err("User not found: " + value);
+                return null;
             }
-            return (data != null) ? data.Head.transform : null;
+            reportedMissing.Remove(value ?? "");
+            return data.Head; // null until the user's body exists
         }
     }
 
     [UnitTitle("Get Local User State")]
     [UnitShortTitle("Local User State")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetLocalUserState : Unit
     {
         [DoNotSerialize]
@@ -60,22 +66,22 @@ namespace Banter.VisualScripting
         {
             userPosition = ValueOutput("Position", (f) =>
             {
-                var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
-                return (data != null) ? data.Head.transform.position : Vector3.zero;
+                var data = BSScene.Instance().users.FirstOrDefault(user => user.isLocal);
+                return data != null && data.Head != null ? data.Head.position : Vector3.zero;
             });
 
             userRotation = ValueOutput("Rotation", (f) =>
             {
-                var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
-                return (data != null) ? data.Head.transform.rotation : Quaternion.identity;
+                var data = BSScene.Instance().users.FirstOrDefault(user => user.isLocal);
+                return data != null && data.Head != null ? data.Head.rotation : Quaternion.identity;
             });
         }
     }
 
     [UnitTitle("Get User Saved Value")]
     [UnitShortTitle("GetUserSavedValue")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUserSavedValue : Unit
     {
         [DoNotSerialize]
@@ -92,11 +98,13 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-             inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    BanterScene.Instance().events.OnGetUserState.Invoke(_key, _uid);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
+                    BSScene.Instance().events.OnGetUserState.Invoke(_key, _uid);
                 }, $"{nameof(GetUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
@@ -108,11 +116,11 @@ namespace Banter.VisualScripting
 
     }
 
-    
+
     [UnitTitle("Set User Saved Value")]
     [UnitShortTitle("SetUserSavedValue")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUserSavedValue : Unit
     {
         [DoNotSerialize]
@@ -131,12 +139,14 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-             inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
                 var _value = flow.GetValue<string>(value);
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    BanterScene.Instance().events.OnSetUserState.Invoke(_key, _uid, _value);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
+                    BSScene.Instance().events.OnSetUserState.Invoke(_key, _uid, _value);
                 }, $"{nameof(SetUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
@@ -152,8 +162,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Remove User Saved Value")]
     [UnitShortTitle("RemoveUserSavedValue")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class RemoveUserSavedValue : Unit
     {
         [DoNotSerialize]
@@ -170,11 +180,13 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-             inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    BanterScene.Instance().events.OnRemoveUserState.Invoke(_key, _uid);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
+                    BSScene.Instance().events.OnRemoveUserState.Invoke(_key, _uid);
                 }, $"{nameof(RemoveUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
@@ -186,4 +198,3 @@ namespace Banter.VisualScripting
 
     }
 }
-#endif

@@ -1,0 +1,207 @@
+/* The checklist look shared by the Setup panel (project setup) and the Builder (pre-build checks): a heading with
+   Re-check and a pink Fix All, a summary line, and a bordered list of rows, each with a status icon (set in code from
+   Unity's built-in icons), a title, a badge, a summary, details and its own buttons. Both windows load this sheet, so
+   the two lists can't drift apart. Colours stay neutral or semi-transparent so they read in both editor skins. */
+
+/* -- Heading ------------------------------------------------------------------------ */
+
+.checklist__heading {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.checklist__title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+}
+
+.checklist__spacer {
+    flex-grow: 1;
+}
+
+.unity-button.checklist__recheck {
+    margin: 0 6px 0 0;
+    padding: 3px 10px;
+}
+
+.unity-button.checklist__fix-all {
+    margin: 0;
+    padding: 3px 14px;
+    -unity-font-style: bold;
+    background-color: rgb(186, 38, 98);
+    border-color: rgb(214, 66, 126);
+    color: rgb(255, 255, 255);
+}
+
+.unity-button.checklist__fix-all:hover {
+    background-color: rgb(206, 50, 113);
+}
+
+.unity-button.checklist__fix-all:disabled {
+    background-color: rgba(128, 128, 128, 0.25);
+    border-color: rgba(128, 128, 128, 0.35);
+    color: rgba(128, 128, 128, 1);
+}
+
+.checklist__summary {
+    white-space: normal;
+    padding: 0;
+    margin: 4px 0 10px 0;
+    opacity: 0.85;
+}
+
+.checklist__list {
+    border-width: 1px;
+    border-radius: 6px;
+    border-color: rgba(128, 128, 128, 0.35);
+    overflow: hidden;
+}
+
+.checklist__hint {
+    font-size: 11px;
+    white-space: normal;
+    padding: 0;
+    margin-top: 8px;
+    opacity: 0.6;
+}
+
+/* -- Rows ----------------------------------------------------------------------------- */
+
+.checklist-row {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border-bottom-width: 1px;
+    border-color: rgba(128, 128, 128, 0.25);
+}
+
+/* A one-line row, like the Builder's row for the checks that passed. */
+.checklist-row--compact {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.checklist-row--last {
+    border-bottom-width: 0;
+}
+
+.checklist-row:hover {
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+.checklist-row__icon {
+    width: 16px;
+    height: 16px;
+    margin: 1px 10px 0 0;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.checklist-row__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.checklist-row__title-line {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.checklist-row__title {
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0 6px 0 0;
+}
+
+.checklist-row__badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    margin: 0;
+    border-radius: 8px;
+    background-color: rgba(128, 128, 128, 0.22);
+}
+
+.checklist-row__badge--required,
+.checklist-row__badge--warning {
+    background-color: rgba(236, 152, 42, 0.26);
+}
+
+.checklist-row__badge--recommended,
+.checklist-row__badge--note {
+    background-color: rgba(88, 160, 232, 0.24);
+}
+
+.checklist-row__badge--error {
+    background-color: rgba(230, 69, 95, 0.3);
+}
+
+.checklist-row--done .checklist-row__badge {
+    opacity: 0.55;
+}
+
+.checklist-row__summary {
+    white-space: normal;
+    padding: 0;
+    margin-top: 3px;
+    opacity: 0.9;
+}
+
+.checklist-row--done .checklist-row__summary {
+    opacity: 0.65;
+}
+
+.checklist-row__details {
+    font-size: 11px;
+    white-space: normal;
+    padding: 0;
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+/* One problem inside a row (a check can find several), with its own buttons. */
+.checklist-row__issue {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: 4px;
+}
+
+.checklist-row__issue-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.checklist-row__actions {
+    flex-direction: row;
+    flex-shrink: 0;
+    align-self: center;
+    margin-left: 10px;
+}
+
+.unity-button.checklist-row__action {
+    flex-shrink: 0;
+    align-self: center;
+    margin: 0 0 0 6px;
+    padding: 3px 10px;
+}
+
+/* The Builder's passed checks, listed under their one row when it's opened: each name and what it looked at. */
+.checklist-row__passed {
+    margin-top: 8px;
+}
+
+.checklist-row__passed-name {
+    padding: 0;
+    margin: 0;
+}
+
+.checklist-row__passed-description {
+    font-size: 11px;
+    white-space: normal;
+    padding: 0;
+    margin-top: 2px;
+    opacity: 0.7;
+}

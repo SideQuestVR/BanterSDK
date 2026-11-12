@@ -23,7 +23,7 @@ public class AddPanelStuff : MonoBehaviour
 
     void Start()
     {
-        Invoke(nameof(WaitForRuntimePanel),1f);
+        Invoke(nameof(WaitForRuntimePanel), 1f);
     }
 
     public void Reset()
@@ -38,7 +38,7 @@ public class AddPanelStuff : MonoBehaviour
 
         if (uIDocument.runtimePanel == null)
         {
-            Invoke(nameof(WaitForRuntimePanel),0.5f);
+            Invoke(nameof(WaitForRuntimePanel), 0.5f);
             return;
         }
 

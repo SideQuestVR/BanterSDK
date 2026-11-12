@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Menu Browser Open URL")]
     [UnitShortTitle("Menu Browser Nav")]
-    [UnitCategory("Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Browser")]
+    [TypeIcon(typeof(BSObjectId))]
     public class MenuOpenUrl : Unit
     {
         [DoNotSerialize]
@@ -22,10 +21,11 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var urlVal = flow.GetValue<string>(url);
 
-                BanterScene.Instance().OpenPage(urlVal, 0);
+                BSScene.Instance().OpenPage(urlVal, 0);
 
                 return outputTrigger;
             });
@@ -36,9 +36,9 @@ namespace Banter.VisualScripting
 
     [UnitTitle("World Browser Open URL")]
     [UnitShortTitle("World Browser Nav")]
-    [UnitCategory("Banter")]
-    [Obsolete("Use BanterBrowser Set Url")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS")]
+    [Obsolete("Use BSBrowser Set Url")]
+    [TypeIcon(typeof(BSObjectId))]
     public class WorldOpenUrl : Unit
     {
         [DoNotSerialize]
@@ -56,9 +56,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var urlVal = flow.GetValue<string>(url);
-                var browser = flow.GetValue<BanterBrowser>(browserComponent);
+                var browser = flow.GetValue<BSBrowser>(browserComponent);
 
                 browser.Url = urlVal;
 
@@ -66,10 +67,9 @@ namespace Banter.VisualScripting
             });
             outputTrigger = ControlOutput("");
             url = ValueInput("Url", string.Empty);
-            browserComponent = ValueInput<BanterBrowser>("Banter Browser", null);
+            browserComponent = ValueInput<BSBrowser>("Banter Browser", null);
             browserComponent.SetDefaultValue(null);
             browserComponent.NullMeansSelf();
         }
     }
 }
-#endif

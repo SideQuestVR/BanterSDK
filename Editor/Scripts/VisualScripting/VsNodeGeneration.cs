@@ -2,16 +2,13 @@
 // Retrieved on 2024-06-04
 // SPDX-License-Identifier: MIT
 
-#if BANTER_VISUAL_SCRIPTING
 using UnityEditor;
-using UnityEditor.Compilation;
 using UnityEngine;
 using Unity.VisualScripting;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using System.Collections;
@@ -21,81 +18,190 @@ using System.Collections.Specialized;
 using PicaVoxel;
 #endif
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
+    /// <summary>
+    /// The Visual Scripting node library for spaces: which assemblies and types the fuzzy finder offers nodes
+    /// for (the SDK's components and the Unity APIs the client runs), and building the node database from
+    /// them. Run from the Setup panel's checklist and, in Greenfield, its own code generation. It never shows a dialog, so it also runs in batch mode.
+    /// </summary>
     public static class VsNodeGeneration
     {
-        private const string SETTINGS_ASSET_PATH = "ProjectSettings/VisualScriptingSettings.asset";
-        private const string GENERATED_VS_NODES_VERSION_PREFS_KEY = "Banter_GeneratedVSNodesVersion";
+        /// <summary>Per user and project: the SDK version and option lists the node database was last built for.</summary>
+        const string NodesStampKey = "BS.SDK.VisualScriptingNodes";
 
-#if !BANTER_EDITOR
-        [InitializeOnLoadMethod]
-        private static void OnScriptsReloaded()
-        {
-            if (EditorPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) != PackageManagerUtility.currentVersion)
-            {
-                string DialogMessage = "Banter SDK has been updated and requires Visual Scripting to be regenerated. This may take a few moments.";
-                if (!Application.isBatchMode)
-                    UnityEditor.EditorUtility.DisplayDialog("Banter SDK Updated", DialogMessage, "OK");
-                SetVSTypesAndAssemblies();
-            }
-        }
-#endif
+        // The SDK's own assemblies, named from their types so an asmdef rename can't drop them unnoticed. The
+        // August 2026 Banter.* -> BS.* namespace move rewrote "Banter.SDK" and "Banter.VisualScripting" here to
+        // "BS" and "BS.VisualScripting", which match no assembly: no BS component got any nodes after that.
+        // Declared before the allow-list, whose initializer reads them.
+        /// <summary>BS.SDK: the components (BSText, BSPortal...) and the types they use.</summary>
+        public static readonly string SdkAssemblyName = typeof(BSText).Assembly.GetName().Name;
+        /// <summary>Banter.VisualScripting: the SDK's custom nodes and their event arguments.</summary>
+        public static readonly string SdkNodesAssemblyName = typeof(BS.VisualScripting.SetSpaceStateValue).Assembly.GetName().Name;
+
         /// <summary>
-        /// We need to set the supported types and assemblies in ProjectSettings/VisualScripting
-        /// Ludiq/Unity really does not want us to edit this... so we have to directly edit the json of the file >:(
+        /// Sets the project's Visual Scripting node library to the SDK's assemblies and types, then rebuilds
+        /// the node database. Uses Visual Scripting's own settings API, as its Project Settings page does:
+        /// the database is built from the settings in memory, so a rebuild after editing the settings file on
+        /// disk would still use the old ones until the next domain reload. Returns false, having logged why,
+        /// when the library couldn't be set up.
         /// </summary>
-        public static void SetVSTypesAndAssemblies()
+        public static bool SetVSTypesAndAssemblies()
         {
-            // Initializes internal data structures and editor logic for Visual Scripting.
-            if(!VSUsageUtility.isVisualScriptingUsed)
-                    VSUsageUtility.isVisualScriptingUsed = true;
+            // The first time, this initialises Visual Scripting, which creates its settings and builds the
+            // node database with its defaults, as opening a graph would.
+            if (!VSUsageUtility.isVisualScriptingUsed)
+                VSUsageUtility.isVisualScriptingUsed = true;
 
-            string DialogMessage = string.Empty;
-
-            if (!File.Exists(SETTINGS_ASSET_PATH))
+            var configuration = BoltCore.Configuration;
+            if (configuration == null)
             {
-                DialogMessage = "Visual Scripting is not initialized. Please navigate to the Visual Scripting settings in the Unity project settings to initialize.\n" +
-                    "Then, re-run 'Configure Visual Scripting' in the Altspace Builder's Tools menu.";
-                if (!Application.isBatchMode)
-                    UnityEditor.EditorUtility.DisplayDialog("Visual Scripting Settings Not Found", DialogMessage, "OK");
-                Debug.LogError(DialogMessage);
-                return;
+                Debug.LogError("[Creator SDK] Visual Scripting didn't initialise, so its node library wasn't set up. " +
+                               "Open Edit > Project Settings > Visual Scripting once, then try again.");
+                return false;
             }
 
-            if (!Application.isBatchMode && !EditorPrefs.HasKey(GENERATED_VS_NODES_VERSION_PREFS_KEY))
+            // Visual Scripting writes its settings without checking them out or clearing a read-only flag. A file
+            // that stays read-only would keep the old library on disk while this session showed the new one, until
+            // the next restart put it back.
+            var settingsPath = PluginPaths.projectSettings;
+            if (File.Exists(settingsPath))
             {
-                DialogMessage = "Initialising Banter Visual Scripting support. This may take a few moments.";
-                EditorUtility.DisplayDialog("Banter Scripting Initialization", DialogMessage, "OK");
+                VersionControlUtility.Unlock(settingsPath);
+                if (new FileInfo(settingsPath).IsReadOnly)
+                {
+                    Debug.LogError($"[Creator SDK] {settingsPath} is read-only, so the Visual Scripting node library can't be saved. " +
+                                   "Check it out in your version control, or make it writable, then try again.");
+                    return false;
+                }
             }
 
-            // There's an embedded JSON in this asset file. Manually replace the assembly and type arrays.
-            string settingsAssetContents = File.ReadAllText(SETTINGS_ASSET_PATH);
+            // Replaced, not merged: a space can only use what the client runs.
+            configuration.assemblyOptions.Clear();
+            configuration.assemblyOptions.AddRange(assemblyAllowList.Select(name => (LooseAssemblyName)name));
+            configuration.typeOptions.Clear();
+            configuration.typeOptions.AddRange(typeAllowList.Distinct());
+            configuration.GetMetadata(nameof(configuration.assemblyOptions)).Save();
+            configuration.GetMetadata(nameof(configuration.typeOptions)).Save();
+            if (!WriteSettingsNow(configuration))
+                return false;
 
-            // Replace assembly options array
-            settingsAssetContents = settingsAssetContents.SetJSONArrayValueHelper("assemblyOptions", assemblyAllowList);
+            Codebase.UpdateSettings();
+            RebuildNodeDatabase();
 
-            // Replace type options array
-            var typesToGenerate = new List<Type>(typeAllowList);
-            settingsAssetContents = settingsAssetContents.SetJSONArrayValueHelper("typeOptions", typesToGenerate.Select(type => type.FullName));
-
-            File.WriteAllText(SETTINGS_ASSET_PATH, settingsAssetContents);
-
-            AssetDatabase.Refresh();
-            CompilationPipeline.RequestScriptCompilation();
-
-            UnitBase.Rebuild();
-
-            EditorPrefs.SetString(GENERATED_VS_NODES_VERSION_PREFS_KEY, PackageManagerUtility.currentVersion);
+            EditorUserSettings.SetConfigValue(NodesStampKey, CurrentStamp);
+            Debug.Log($"[Creator SDK] Visual Scripting node library set up for SDK {PackageManagerUtility.currentVersion ?? "(unknown version)"}.");
+            return true;
         }
 
-        private static string SetJSONArrayValueHelper(this string target, string arrayContainerName, IEnumerable<string> arrayContents)
+        // SaveProjectSettingsAsset only queues the write for EditorApplication.delayCall, which an editor in the
+        // background doesn't reach, and a batch-mode run that quits straight after never does. Visual Scripting's
+        // own (private) serializer writes it now. The queued write still happens as well, and covers a version
+        // without that method; it runs the same serializer, so a write that fails here would fail there too.
+        static bool WriteSettingsNow(PluginConfiguration configuration)
         {
-            // Match pattern of "<arrayContainerName>":{"$content":[<any # of characters>]
-            Regex reg = new Regex($"(\"{arrayContainerName}\":{{\"\\$content\":\\[)(.*)(\\])");
-            string jsonArrayContents = string.Join(',', arrayContents.Select(s => $"\"{s}\""));
-            // Only replace the second capture group, since that contains current array contents.
-            return reg.Replace(target, $"$1{jsonArrayContents}$3");
+            configuration.SaveProjectSettingsAsset(true);
+            try
+            {
+                typeof(PluginConfiguration)
+                    .GetMethod("SerializeProjectSettingsAssetToDisk", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    ?.Invoke(configuration, null);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[Creator SDK] Visual Scripting's settings couldn't be saved, so the node library wasn't set up: " +
+                               (e.InnerException ?? e).Message);
+                return false;
+            }
+        }
+
+        // Visual Scripting's UnitBase.Rebuild is Unlock + Delete + Build. Its background loader can still be reading
+        // the database for a few seconds after a script reload, and Windows won't delete a file that's open, so the
+        // delete waits for it. With Visual Scripting's experimental "Update Nodes Automatically" on, that loader also
+        // waits for work on the main thread, so the wait runs that work too, or neither would finish.
+        static void RebuildNodeDatabase()
+        {
+            var database = BoltFlow.Paths.unitOptions;
+            if (File.Exists(database))
+            {
+                VersionControlUtility.Unlock(database);
+                var giveUpAt = DateTime.UtcNow.AddSeconds(30);
+                while (true)
+                {
+                    try
+                    {
+                        File.Delete(database);
+                        break;
+                    }
+                    catch (IOException) when (DateTime.UtcNow < giveUpAt)
+                    {
+                        UnityAPI.ProcessDelegates();
+                        System.Threading.Thread.Sleep(250);
+                    }
+                }
+            }
+            // Build writes the database file before its rows. If it throws or Unity is closed part way, the file is
+            // there but empty, and nothing rebuilds it; without the stamp the Setup panel offers to generate the nodes.
+            EditorUserSettings.SetConfigValue(NodesStampKey, "");
+            UnitBase.Build();
+        }
+
+        /// <summary>
+        /// The SDK assemblies and types this project's Visual Scripting settings don't include. False when
+        /// Visual Scripting hasn't been initialised in this project, so there are no settings to read.
+        /// </summary>
+        public static bool TryGetMissingOptions(out List<string> assemblies, out List<Type> types)
+        {
+            assemblies = new List<string>();
+            types = new List<Type>();
+            var configuration = VSUsageUtility.isVisualScriptingUsed ? BoltCore.Configuration : null;
+            if (configuration == null)
+                return false;
+            var configuredAssemblies = new HashSet<string>(configuration.assemblyOptions.Select(option => option.name));
+            assemblies.AddRange(assemblyAllowList.Where(name => !configuredAssemblies.Contains(name)));
+            var configuredTypes = new HashSet<Type>(configuration.typeOptions.Where(type => type != null));
+            types.AddRange(typeAllowList.Distinct().Where(type => !configuredTypes.Contains(type)));
+            return true;
+        }
+
+        /// <summary>Whether the node database the fuzzy finder reads exists.</summary>
+        public static bool NodeDatabaseExists
+        {
+            get
+            {
+                var path = VSUsageUtility.isVisualScriptingUsed ? BoltFlow.Paths?.unitOptions : null;
+                return !string.IsNullOrEmpty(path) && File.Exists(path);
+            }
+        }
+
+        /// <summary>Whether the node database was last built here by this SDK version, with these lists.</summary>
+        public static bool NodesBuiltForThisVersion => EditorUserSettings.GetConfigValue(NodesStampKey) == CurrentStamp;
+
+        /// <summary>The SDK version the node database was last built for here, or null.</summary>
+        public static string NodesBuiltForVersion
+        {
+            get
+            {
+                var stamp = EditorUserSettings.GetConfigValue(NodesStampKey);
+                return string.IsNullOrEmpty(stamp) ? null : stamp.Split('|')[0];
+            }
+        }
+
+        static string CurrentStamp => (PackageManagerUtility.currentVersion ?? "unknown") + "|" + OptionsHash();
+
+        // FNV-1a over the sorted lists: a changed list means a rebuild, even within one SDK version.
+        static string OptionsHash()
+        {
+            var text = string.Join("\n", assemblyAllowList.OrderBy(name => name, StringComparer.Ordinal)) + "\n--\n" +
+                       string.Join("\n", typeAllowList.Select(type => type.FullName).Distinct().OrderBy(name => name, StringComparer.Ordinal));
+            uint hash = 2166136261;
+            foreach (var c in text)
+            {
+                hash ^= c;
+                hash *= 16777619;
+            }
+            return hash.ToString("x8");
         }
 
         public static readonly HashSet<string> assemblyAllowList = new HashSet<string>() {
@@ -140,12 +246,17 @@ namespace Banter.SDKEditor
 
             "Unity.Timeline",
             "UnityEngine.DirectorModule",
-            "Cinemachine",
+            "Cinemachine",          // Cinemachine 2.x
+            "Unity.Cinemachine",    // Cinemachine 3.x (com.unity.cinemachine 3); also in AotPreBuilder._allowedNamespaces
+            "Unity.Splines",        // SplineContainer, SplineAnimate; AotPreBuilder allows the UnityEngine.Splines namespace
+            "UnityEngine.TerrainModule",        // Terrain, TerrainData, TerrainLayer
+            "UnityEngine.TerrainPhysicsModule", // TerrainCollider
+            "Unity.RenderPipelines.Core.Runtime", // Volume (post-processing); AotPreBuilder allows only Volume from it
 
-            // Banter
-            "Banter.SDK",
-            "Banter.VisualScripting",
-            
+            // The SDK: components and custom nodes
+            SdkAssemblyName,
+            SdkNodesAssemblyName,
+
             // Picavoxel
             "GarethIW.PicaVoxelInfinity",
 
@@ -192,6 +303,7 @@ namespace Banter.SDKEditor
             typeof(DateTime),
             typeof(TimeSpan),
             typeof(UnityEngine.Random),
+            typeof(UnityEngine.Rendering.SphericalHarmonicsL2), // RenderSettings.ambientProbe, LightProbes.bakedProbes
 
             // UI
             typeof(UnityEngine.UI.CanvasScaler),
@@ -327,6 +439,26 @@ namespace Banter.SDKEditor
             typeof(UnityEngine.Timeline.SignalAsset),
             typeof(UnityEngine.Timeline.SignalEmitter),
 #endif
+#if BANTER_VS_CINEMACHINE
+            // Cinemachine 3: a world's program camera (brain + shots). Types a graph may hold in a
+            // variable; their members come from the Unity.Cinemachine assembly entry above.
+            typeof(Unity.Cinemachine.CinemachineBrain),
+            typeof(Unity.Cinemachine.CinemachineCamera),
+            typeof(Unity.Cinemachine.CinemachineVirtualCameraBase),
+            typeof(Unity.Cinemachine.CinemachineSplineDolly),
+            typeof(Unity.Cinemachine.CinemachineSplineCart),
+            typeof(Unity.Cinemachine.CinemachineTargetGroup),
+            typeof(Unity.Cinemachine.CinemachineBasicMultiChannelPerlin),
+            typeof(Unity.Cinemachine.CinemachineImpulseSource),
+            typeof(Unity.Cinemachine.CinemachineClearShot),
+            typeof(Unity.Cinemachine.CinemachineSequencerCamera),
+            typeof(Unity.Cinemachine.CinemachineMixingCamera),
+            typeof(Unity.Cinemachine.CinemachineCore),
+            typeof(Unity.Cinemachine.CinemachineBlendDefinition),
+            typeof(Unity.Cinemachine.LensSettings),
+            typeof(Unity.Cinemachine.PrioritySettings),
+            typeof(Unity.Cinemachine.CameraTarget),
+#endif
 
             typeof(AudioMixerGroup),
             typeof(AnimatorStateInfo),
@@ -371,10 +503,13 @@ namespace Banter.SDKEditor
 
             // Banter classes that aren't MonoBehaviours
             // See AotPreBuilder._allowedBanterTypes for the MBs
-            typeof(Banter.SDK.BanterUser),
-            typeof(Banter.SDK.BanterAttachment),
+            typeof(BS.BSUser),
+            typeof(BS.BSAttachment),
 
-            typeof(Banter.SDK.Score),
+            typeof(BS.Score),
+            // Shared-clock phase for synced loops (SyncedClock.Phase01); worlds already use it, and it is on the
+            // client allow-list. Its other members (NowSeconds, ServerOffsetSeconds) are not, so graphs can't use them.
+            typeof(BS.SyncedClock),
 #if BANTER_PICAVOXEL
             typeof(PicaVoxel.VoxelEditEventArgs),
             typeof(PicaVoxel.VoxelDetectorEventArgs),
@@ -383,4 +518,3 @@ namespace Banter.SDKEditor
         };
     }
 }
-#endif

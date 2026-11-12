@@ -1,16 +1,15 @@
-#if BANTER_VISUAL_SCRIPTING
 using System;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Trigger VisualScriptingEvent")]
     [UnitShortTitle("Trigger VisualScriptingEvent")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [Obsolete("Use Visual Scripting Relay instead")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class TriggerUnityEvent : Unit
     {
         [DoNotSerialize]
@@ -27,7 +26,8 @@ namespace Banter.VisualScripting
             Target = ValueInput(typeof(VisualScriptingEvent), nameof(Target));
             Target.SetDefaultValue(null);
             Target.NullMeansSelf();
-            trigger = ControlInput("", (flow) => {
+            trigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<VisualScriptingEvent>(Target);
                 target.OnCustomEvent?.Invoke();
                 return triggered;
@@ -37,4 +37,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

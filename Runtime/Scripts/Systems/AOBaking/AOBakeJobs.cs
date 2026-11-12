@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Burst-compiled job to prepare RaycastCommands for AO baking.
@@ -100,8 +100,8 @@ namespace Banter.SDK
 
             for (int i = 0; i < SampleCount; i++)
             {
-                // Check if raycast hit something (colliderInstanceID != 0 means hit)
-                if (RaycastResults[startIndex + i].colliderInstanceID != 0)
+                // Check if raycast hit something (a valid colliderEntityId means hit)
+                if (RaycastResults[startIndex + i].colliderEntityId.IsValid())
                 {
                     hitCount++;
                 }

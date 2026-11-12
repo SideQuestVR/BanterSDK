@@ -45,8 +45,18 @@ public class APICommands
     public const string METHOD_RETURN = "!mr!";
     public const string RAYCAST = "!rc!";
     public const string SET_PUBLIC_SPACE_PROPS = "!spsp!";
+    /// <summary>Size the world (space page) browser view: <c>w|1920§h|1080</c>; empty restores the default. See BSScene.SetWorldBrowserSize.</summary>
+    public const string SET_WORLD_BROWSER_SIZE = "!swbs!";
     public const string SET_PROTECTED_SPACE_PROPS = "!sprsp!";
     public const string SET_USER_PROPS = "!sup!";
+    /// <summary>JSON space-state op (request/response). Payload: "sub§base64(UTF-8 JSON)".</summary>
+    public const string SPACE_STATE_OP = "!sso!";
+    /// <summary>JSON user-state op (request/response). Same encoding as SPACE_STATE_OP.</summary>
+    public const string USER_STATE_OP = "!uso!";
+    /// <summary>JSON progression op (request/response): fire a world-bound XP hook, read my progression. Same encoding as SPACE_STATE_OP.</summary>
+    public const string PROGRESSION_OP = "!pgo!";
+    /// <summary>Generic host-extension op (request/response), routed to BSHostExtensions by extension name. Payload: "command§op§base64(UTF-8 JSON)"; reply "!hxo!§base64(JSON envelope)".</summary>
+    public const string HOST_EXT_OP = "!hxo!";
     public const string TELEPORT = "!t!";
     public const string ATTACH = "!at!";
     public const string DETACH = "!dt!";
@@ -61,6 +71,8 @@ public class APICommands
     public const string AI_IMAGE = "!aiimg!";
     public const string AI_MODEL = "!aiglb!";
     public const string ADD_PLAYER_FORCE = "!adpf!";
+    /// <summary>Let go of what the local player holds (request/reply). Payload: "side¶unityId" (side -1 = both hands, unityId empty = whatever is held); reply "!rlg!¶1" when something was released, else "!rlg!¶0".</summary>
+    public const string RELEASE_GRAB = "!rlg!";
     public const string BASE_64_TO_CDN = "!b64cdn!";
     public const string OBJECT_TEX_TO_BASE_64 = "!objtob64!";
     public const string SELECT_FILE = "!sltglb!";
@@ -116,8 +128,16 @@ public class APICommands
     public const string BANTER_VERSION = "bv!";
     public const string SEND_USER = "su!";
     public const string FULL_SPACE_STATE = "fss!";
+    /// <summary>Full JSON space-state snapshot. Payload: base64(UTF-8 JSON).</summary>
+    public const string FULL_SPACE_STATE_JSON = "fsj!";
+    /// <summary>Incremental JSON space-state change. Payload: base64(UTF-8 JSON).</summary>
+    public const string SPACE_STATE_JSON = "spj!";
+    /// <summary>Incremental JSON user-state change. Payload: base64(UTF-8 JSON).</summary>
+    public const string USER_STATE_JSON = "upj!";
     public const string VOICE_STARTED = "vs!";
     public const string PLAY_AVATAR = "pa!";
+    /// <summary>Host-extension event (BSHostExtensions.Emit). Payload: "command§evt§base64(UTF-8 JSON)".</summary>
+    public const string HOST_EXT_EVENT = "hxe!";
     #endregion
     #region Legacy stuff
     public const string LEGACY = "!le";
@@ -160,8 +180,16 @@ public class APICommands
     public const string SET_BLOCK_LEFT_TRIGGER = "!sbltr!";
     public const string SET_BLOCK_RIGHT_TRIGGER = "!sbrtr!";
 
+    // Lighting persistence: the page stores the baked lighting data with its
+    // saved scene and hands it back on load. GET returns the payload computed by
+    // an app-registered callback; SET pushes a stored payload for the app to apply.
+    public const string LIGHTING_DATA_GET = "!ligd!";
+    public const string LIGHTING_DATA_SET = "!lisd!";
+
     // Platform detection command
     public const string GET_PLATFORM = "!gp!";
+    // Reply: "1"/"0" for Android, Windows and VR, joined with PRIMARY (BSScene.FormatDeviceInfo)
+    public const string GET_DEVICE_INFO = "!gdi!";
 
     public const string GET_BOUNDS = "!gb!";
 
@@ -171,6 +199,17 @@ public class APICommands
     // Controller input events
     public const string CONTROLLER_AXIS_UPDATE = "ca!";
     public const string TRIGGER_AXIS_UPDATE = "ta!";
+
+    // Runtime script-graph editing (Shane's Editor). One command, subcommand-multiplexed;
+    // payloads are base64(UTF-8 JSON) in both directions so graph JSON never meets the
+    // unescaped bus delimiters.
+    public const string SCRIPT_GRAPH = "!sg!";
+
+    // Per-world persisted files (Shane's Editor scene + script-graph overrides). One command,
+    // subcommand-multiplexed, base64(UTF-8 JSON) both ways for the same delimiter reason as
+    // SCRIPT_GRAPH. Writes need the signed-in user's token, which the SDK does not have, so the
+    // work is delegated out through BSScene.data (DataBridge).
+    public const string PERSIST_FILE = "!pf!";
 
     // Asset System
     public const string ASSET_REGISTERED = "!ar!";
@@ -182,4 +221,12 @@ public class APICommands
     public const string DESTROY_ASSET = "!dra!";
     public const string QUERY_ASSET = "!qa!";
     public const string SET_ASSET_PROPERTY = "!sap!";
+    public const string KEY_RELEASE = "kr!";
+    public const string WORLD_STATE_OP = "!wso!";
+    public const string WORLD_OPTION_PRESSED = "wop!";
+    public const string FULL_WORLD_STATE_JSON = "fwj!";
+    public const string WORLD_STATE_JSON = "wpj!";
+
+    // BS.Assets: op§field§..., answered with JSON (BSAssetRequests).
+    public const string ASSET_DATABASE = "!adb!";
 }

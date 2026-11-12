@@ -1,19 +1,17 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Diagnostics;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On Receive Browser Message")]
     [UnitShortTitle("On Receive Browser Message")]
-    [UnitCategory("Events\\Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Browser")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnReceiveBrowserMessage : EventUnit<CustomEventArgs>
     {
 
-        //#if BANTER_VISUAL_SCRIPTING
         //            EventBus.Trigger("OnAiImage", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
@@ -47,9 +45,8 @@ namespace Banter.VisualScripting
 
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
-        {   
+        {
             flow.SetValue(result, data.arguments[0]);
         }
     }
 }
-#endif

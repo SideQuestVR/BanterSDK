@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Diagnostics;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On Get User State")]
     [UnitShortTitle("Get User State")]
-    [UnitCategory("Events\\Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Space")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnGetUserState : EventUnit<CustomEventArgs>
     {
 
@@ -39,9 +38,8 @@ namespace Banter.VisualScripting
 
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
-        {   
+        {
             flow.SetValue(result, data.arguments[0]);
         }
     }
 }
-#endif

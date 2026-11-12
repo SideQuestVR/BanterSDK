@@ -1,18 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On One Shot")]
     [UnitShortTitle("On One Shot")]
-    [UnitCategory("Events\\Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Networking")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnOneShot : EventUnit<CustomEventArgs>
     {
 
-        //#if BANTER_VISUAL_SCRIPTING
         //            EventBus.Trigger("OnOneShot", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
@@ -51,4 +49,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

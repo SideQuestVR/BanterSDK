@@ -15,7 +15,7 @@ public class AvatarRef : MonoBehaviour
                 if (existing != null)
                 {
                     _Instance = existing.GetComponent<AvatarRef>();
-                    if( _Instance == null)
+                    if (_Instance == null)
                     {
                         existing.name = "__AvatarRef_backup?";
                         MakeInstance();
@@ -30,7 +30,7 @@ public class AvatarRef : MonoBehaviour
         }
     }
 
-    public static void  MakeInstance()
+    public static void MakeInstance()
     {
         var gameObject = new GameObject("__AvatarRef");
         gameObject.hideFlags = HideFlags.HideAndDontSave;

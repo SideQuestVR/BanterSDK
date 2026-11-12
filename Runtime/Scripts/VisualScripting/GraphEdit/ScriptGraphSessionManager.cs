@@ -1,0 +1,465 @@
+#if GREENFIELD_PROJECT
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityObject = UnityEngine.Object;
+
+namespace BS
+{
+    /// <summary>
+    /// Entry point for the "!sg!" bus command. Runs on the main thread (BSScene defers onto
+    /// it); takes and returns plain JSON strings - base64 framing happens in BSScene.
+    /// </summary>
+    public class ScriptGraphSessionManager
+    {
+        static ScriptGraphSessionManager _instance;
+        public static ScriptGraphSessionManager Instance => _instance ??= new ScriptGraphSessionManager();
+
+        readonly Dictionary<string, ScriptGraphSession> sessions = new Dictionary<string, ScriptGraphSession>();
+        int nextSessionId = 1;
+
+        /// <summary>
+        /// A request from the world's page. The world's own machines change only if the host allows
+        /// (<see cref="GraphEditPermission"/>); the page's own machines, the ones it made, always may. A refusal is a
+        /// reply with <c>code: "refused"</c>, not an exception.
+        /// </summary>
+        public string HandleCommand(string sub, string payloadJson, BSScene scene)
+        {
+            using (GraphEditPermission.PageCall())
+            {
+                try { return Dispatch(sub, payloadJson); }
+                catch (RefusedException e)
+                {
+                    GraphEditPermission.WarnOnce(e.Message);
+                    return JsonConvert.SerializeObject(new { error = "refused: " + e.Message, code = "refused" });
+                }
+            }
+        }
+
+        /// <summary>The same requests from the app itself (editor tools and tests), which may change any machine.</summary>
+        public string HandleCommandAsHost(string sub, string payloadJson, BSScene scene) => Dispatch(sub, payloadJson);
+
+        sealed class RefusedException : Exception
+        {
+            public RefusedException(string what) : base(what) { }
+        }
+
+        /// <summary>Throws <see cref="RefusedException"/> inside a page's request that may not change <paramref name="machine"/>.</summary>
+        static void RequireMayChange(ScriptMachine machine, string what)
+        {
+            if (GraphEditPermission.InPageCall && !GraphEditPermission.MayChange(machine)) throw new RefusedException(what);
+        }
+
+        string Dispatch(string sub, string payloadJson)
+        {
+            switch (sub)
+            {
+                case "list": return List(payloadJson);
+                case "open": return Open(payloadJson);
+                case "ops": return Ops(payloadJson);
+                case "save": return Save(payloadJson);
+                case "apply": return Apply(payloadJson);
+                case "revert": return Revert(payloadJson);
+                case "close": return Close(payloadJson);
+                case "applyEnvelope": return ApplyEnvelope(payloadJson);
+                case "revertMachine": return RevertMachine(payloadJson);
+                case "loadEnvelope": return LoadEnvelope(payloadJson);
+                case "create": return Create(payloadJson);
+                case "removeMachine": return RemoveMachine(payloadJson);
+                case "pause": return Pause(payloadJson);
+                case "watch": return Watch(payloadJson);
+                case "watchPoll": return WatchPoll(payloadJson);
+                default:
+                    throw new ArgumentException($"Unknown script-graph subcommand '{sub}'");
+            }
+        }
+
+        class ListBody
+        {
+            /// <summary>
+            /// Include each machine's current graph hash. Off by default and deliberately so:
+            /// computing one means serializing the whole graph, and the picker polls this list.
+            /// Only the load-time override check needs the hashes, and it asks once.
+            /// </summary>
+            public bool withRefs;
+        }
+
+        string List(string payloadJson)
+        {
+            var body = string.IsNullOrEmpty(payloadJson)
+                ? null
+                : JsonConvert.DeserializeObject<ListBody>(payloadJson);
+
+            var machines = MachineDirectory.AllMachines()
+                .Select(m => MachineDirectory.Describe(m, body != null && body.withRefs))
+                .ToList();
+            return JsonConvert.SerializeObject(new { machines });
+        }
+
+        class OpenBody
+        {
+            public TargetRef target;
+        }
+
+        string Open(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<OpenBody>(payloadJson);
+            var machine = MachineDirectory.Resolve(body?.target)
+                ?? throw new ArgumentException("Machine not found");
+            var session = ScriptGraphSession.OpenFromMachine(NextId(), machine, body.target);
+            sessions[session.sessionId] = session;
+            return GraphViewModel.Build(session).ToString(Formatting.None);
+        }
+
+        class SessionBody
+        {
+            public string sessionId;
+        }
+
+        ScriptGraphSession Require(string sessionId)
+        {
+            if (string.IsNullOrEmpty(sessionId) || !sessions.TryGetValue(sessionId, out var session))
+            {
+                throw new ArgumentException($"No session '{sessionId}'");
+            }
+            return session;
+        }
+
+        string Ops(string payloadJson)
+        {
+            var batch = JsonConvert.DeserializeObject<OpBatch>(payloadJson)
+                ?? throw new ArgumentException("Empty op batch");
+            var session = Require(batch.sessionId);
+            var failedOpIndex = -1;
+            try
+            {
+                session.ApplyOps(batch, out failedOpIndex);
+            }
+            catch (RevMismatchException e)
+            {
+                return JsonConvert.SerializeObject(new { error = e.Message, code = "revMismatch", rev = e.currentRev });
+            }
+            catch (Exception e)
+            {
+                return JsonConvert.SerializeObject(new { error = e.Message, code = "opFailed", failedOpIndex });
+            }
+            return GraphViewModel.Build(session).ToString(Formatting.None);
+        }
+
+        string Save(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<SessionBody>(payloadJson);
+            var session = Require(body?.sessionId);
+            return JsonConvert.SerializeObject(session.SaveEnvelope());
+        }
+
+        string Apply(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<SessionBody>(payloadJson);
+            var session = Require(body?.sessionId);
+            var machine = MachineDirectory.Resolve(session.target)
+                ?? throw new InvalidOperationException("Session has no resolvable target machine");
+            RequireMayChange(machine, "applying a graph to one of the world's own machines");
+            session.ApplyToMachine(machine);
+            // This session now matches the machine; any other one open on it does not.
+            var invalidated = InvalidateSessionsFor(machine, keep: session.sessionId);
+            return JsonConvert.SerializeObject(new { ok = true, invalidated });
+        }
+
+        string Revert(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<SessionBody>(payloadJson);
+            var session = Require(body?.sessionId);
+            session.Revert();
+            return GraphViewModel.Build(session).ToString(Formatting.None);
+        }
+
+        string Close(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<SessionBody>(payloadJson);
+            if (body?.sessionId != null && sessions.TryGetValue(body.sessionId, out var session))
+            {
+                session.Dispose();
+                sessions.Remove(body.sessionId);
+            }
+            return JsonConvert.SerializeObject(new { ok = true });
+        }
+
+        class EnvelopeBody
+        {
+            public TargetRef target;
+            public GraphEnvelope envelope;
+        }
+
+        /// <summary>
+        /// Read an applyEnvelope/loadEnvelope payload in either shape.
+        /// </summary>
+        /// <remarks>
+        /// C# was written for <c>{target, envelope}</c> and every TS caller sent the bare envelope,
+        /// so this path failed with "Envelope missing" on every call in the real client. Each side's
+        /// test used its own shape, so neither noticed. The TS side now sends the wrapped form, but
+        /// injection bundles already in the wild send the bare one, so both are read.
+        /// </remarks>
+        static EnvelopeBody ReadEnvelopeBody(string payloadJson)
+        {
+            if (string.IsNullOrEmpty(payloadJson)) return null;
+            var json = JObject.Parse(payloadJson);
+            if (json["envelope"] is JObject)
+            {
+                return json.ToObject<EnvelopeBody>();
+            }
+            return new EnvelopeBody { envelope = json.ToObject<GraphEnvelope>() };
+        }
+
+        /// <summary>Swap a stored envelope straight into a machine, no session (load-time path).</summary>
+        string ApplyEnvelope(string payloadJson)
+        {
+            var body = ReadEnvelopeBody(payloadJson);
+            if (body?.envelope?.uvsJson == null) throw new ArgumentException("Envelope missing");
+            RequireMayChange(MachineDirectory.Resolve(body.target ?? body.envelope.meta?.target)
+                ?? throw new ArgumentException("Machine not found"), "applying a graph to one of the world's own machines");
+            var result = ApplyOverride(body.envelope, body.target);
+            return JsonConvert.SerializeObject(new
+            {
+                ok = true,
+                warnings = result.warnings,
+                invalidated = result.invalidated,
+            });
+        }
+
+        public class OverrideResult
+        {
+            public ScriptMachine machine;
+            public List<ObjectRefWarning> warnings = new List<ObjectRefWarning>();
+            public List<string> invalidated = new List<string>();
+        }
+
+        /// <summary>
+        /// Install a saved envelope on the machine it targets. The one path every non-session swap
+        /// takes: the bus's applyEnvelope, and the load-time override loader.
+        /// </summary>
+        /// <exception cref="ArgumentException">The target does not resolve.</exception>
+        /// <exception cref="InvalidOperationException">The graph contains blocked elements.</exception>
+        public OverrideResult ApplyOverride(GraphEnvelope envelope, TargetRef target = null)
+        {
+            if (envelope?.uvsJson == null) throw new ArgumentException("Envelope missing");
+            var machine = MachineDirectory.Resolve(target ?? envelope.meta?.target)
+                ?? throw new ArgumentException("Machine not found");
+
+            var result = new OverrideResult { machine = machine };
+            var refs = ObjectRefResolver.Resolve(envelope.objectRefDescriptors, result.warnings);
+            ScriptGraphSession.InstallOnMachine(machine, envelope.uvsJson, refs,
+                envelope.meta?.baseGraphTitle);
+            result.invalidated = InvalidateSessionsFor(machine);
+            return result;
+        }
+
+        /// <summary>Put a machine's authored graph back, undoing every runtime swap on it.</summary>
+        string RevertMachine(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<OpenBody>(payloadJson);
+            var machine = MachineDirectory.Resolve(body?.target)
+                ?? throw new ArgumentException("Machine not found");
+            RequireMayChange(machine, "reverting one of the world's own machines");
+            var reverted = ScriptGraphSession.RevertMachine(machine);
+            var invalidated = reverted ? InvalidateSessionsFor(machine) : new List<string>();
+            return JsonConvert.SerializeObject(new
+            {
+                ok = true,
+                reverted,
+                invalidated,
+                machine = MachineDirectory.Describe(machine),
+            });
+        }
+
+        /// <summary>
+        /// Close every session editing this machine, except <paramref name="keep"/>.
+        /// </summary>
+        /// <remarks>
+        /// A swap replaces the graph a session was cloned from. Left open, that session keeps
+        /// editing a copy of something no longer on the machine, and its next Apply silently puts
+        /// the old graph back over the new one. The ids are returned so a caller can reload.
+        /// </remarks>
+        List<string> InvalidateSessionsFor(ScriptMachine machine, string keep = null)
+        {
+            var closed = new List<string>();
+            foreach (var pair in sessions.ToList())
+            {
+                if (pair.Key == keep || pair.Value.target == null) continue;
+                if (MachineDirectory.Resolve(pair.Value.target) != machine) continue;
+                pair.Value.Dispose();
+                sessions.Remove(pair.Key);
+                closed.Add(pair.Key);
+            }
+            return closed;
+        }
+
+        /// <summary>Open a stored envelope as an editing session (attached if its target resolves).</summary>
+        string LoadEnvelope(string payloadJson)
+        {
+            var body = ReadEnvelopeBody(payloadJson);
+            if (body?.envelope?.uvsJson == null) throw new ArgumentException("Envelope missing");
+            if (body.target != null)
+            {
+                body.envelope.meta ??= new GraphEnvelopeMeta();
+                body.envelope.meta.target = body.target;
+            }
+            var warnings = new List<ObjectRefWarning>();
+            var session = ScriptGraphSession.OpenFromEnvelope(NextId(), body.envelope, warnings);
+            sessions[session.sessionId] = session;
+            return GraphViewModel.Build(session).ToString(Formatting.None);
+        }
+
+        string Create(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<OpenBody>(payloadJson);
+            GameObject host = null;
+            if (!string.IsNullOrEmpty(body?.target?.bid))
+            {
+                var scene = BSScene.Instance();
+                host = scene != null ? scene.GetObjectByBid(body.target.bid).gameObject : null;
+            }
+            // Only the world's own objects, like every other subcommand: the page must not add machines to the
+            // client's objects.
+            if (host == null || !BSWorldScope.Contains(host)) throw new ArgumentException("Object not found");
+
+            var machine = host.AddComponent<ScriptMachine>();
+            machine.nest.SwitchToEmbed(FlowGraph.WithStartUpdate());
+            GraphEditPermission.NotePageMade(machine);
+            return JsonConvert.SerializeObject(new { ok = true, machine = MachineDirectory.Describe(machine) });
+        }
+
+        string RemoveMachine(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<OpenBody>(payloadJson);
+            var machine = MachineDirectory.Resolve(body?.target)
+                ?? throw new ArgumentException("Machine not found");
+            RequireMayChange(machine, "removing one of the world's own machines");
+            // Every session on this OBJECT, not just this machine: removing one shifts the indexes
+            // of the machines after it, so a session addressed as {bid, 2} would next resolve to a
+            // different machine, and an Apply from it would overwrite that one.
+            var closed = new List<string>();
+            foreach (var pair in sessions.Where(p => p.Value.target?.bid == body.target.bid).ToList())
+            {
+                pair.Value.Dispose();
+                sessions.Remove(pair.Key);
+                closed.Add(pair.Key);
+            }
+            UnityObject.Destroy(machine);
+            return JsonConvert.SerializeObject(new { ok = true, invalidated = closed });
+        }
+
+        class PauseBody
+        {
+            public TargetRef target;
+            public bool paused;
+        }
+
+        string Pause(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<PauseBody>(payloadJson);
+            var machine = MachineDirectory.Resolve(body?.target)
+                ?? throw new ArgumentException("Machine not found");
+            RequireMayChange(machine, "pausing one of the world's own machines");
+            machine.GraphPaused = body.paused;
+            return JsonConvert.SerializeObject(new { ok = true, paused = machine.GraphPaused });
+        }
+
+        class WatchBody
+        {
+            public string sessionId;
+            public bool enabled;
+        }
+
+        /// <summary>
+        /// Turn flow watching on or off for a session. Only a watched machine records debug data
+        /// (<see cref="ScriptGraphDebugProvider"/>), and only while its page keeps polling: a watch
+        /// lapses <see cref="ScriptGraphSession.WatchLeaseSeconds"/> after the last poll.
+        /// </summary>
+        string Watch(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<WatchBody>(payloadJson);
+            var session = Require(body?.sessionId);
+            session.watching = body.enabled;
+            if (body.enabled)
+            {
+                session.RenewWatch();
+            }
+            else
+            {
+                session.DropWatch();
+            }
+            // Same clock UVS stamps lastInvokeTime with (see ScriptGraphFlowWatch.Poll).
+            session.lastSampleTime = EditorTimeBinding.time;
+            StartWatchTick();
+            return JsonConvert.SerializeObject(new { ok = true });
+        }
+
+        string WatchPoll(string payloadJson)
+        {
+            var body = JsonConvert.DeserializeObject<SessionBody>(payloadJson);
+            var session = Require(body?.sessionId);
+            var reply = ScriptGraphFlowWatch.Poll(session).ToString(Formatting.None);
+            StartWatchTick();
+            return reply;
+        }
+
+        // True while OnBeforeRenderTick is subscribed. It is only while some session holds a watch,
+        // so a client nobody is debugging pays nothing for this.
+        bool watchTicking;
+
+        void StartWatchTick()
+        {
+            if (watchTicking) return;
+            foreach (var session in sessions.Values)
+            {
+                if (!session.HoldsWatch) continue;
+                Application.onBeforeRender += OnBeforeRenderTick;
+                watchTicking = true;
+                return;
+            }
+        }
+
+        void OnBeforeRenderTick() => Tick(Time.realtimeSinceStartup);
+
+        /// <summary>
+        /// Lapse watches whose page stopped polling, or whose machine was destroyed, so a page that
+        /// closed or crashed without saying so does not leave a machine recording. The tick
+        /// unsubscribes itself once no session holds a watch.
+        /// </summary>
+        /// <param name="now">Realtime, the clock leases are taken on (<c>Time.realtimeSinceStartup</c>).</param>
+        public void Tick(float now)
+        {
+            var anyHeld = false;
+            foreach (var session in sessions.Values)
+            {
+                if (session.ExpireWatch(now)) anyHeld = true;
+            }
+            if (!anyHeld && watchTicking)
+            {
+                Application.onBeforeRender -= OnBeforeRenderTick;
+                watchTicking = false;
+            }
+        }
+
+        public void CloseSessionsFor(string bid)
+        {
+            if (string.IsNullOrEmpty(bid)) return;
+            foreach (var key in sessions.Where(p => p.Value.target?.bid == bid).Select(p => p.Key).ToList())
+            {
+                sessions[key].Dispose();
+                sessions.Remove(key);
+            }
+        }
+
+        string NextId()
+        {
+            return "s" + nextSessionId++;
+        }
+    }
+}
+#endif

@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Int Field")]
     [UnitShortTitle("Create UI Int Field")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIIntField : Unit
     {
         [DoNotSerialize]
@@ -45,9 +44,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var value = flow.GetValue<int>(initialValue);
@@ -56,7 +56,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIIntField] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIIntField] BSUIPanel component not found on GameObject.");
                     flow.SetValue(intFieldId, "");
                     return outputTrigger;
                 }
@@ -94,7 +94,7 @@ namespace Banter.VisualScripting
                     }
 
                     // Set initial value if provided
-                    var valueMessage = $"{panelIdStr}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{intFieldElementId}{MessageDelimiters.SECONDARY}text{MessageDelimiters.SECONDARY}{value}";
+                    var valueMessage = $"{panelIdStr}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{intFieldElementId}{MessageDelimiters.SECONDARY}text{MessageDelimiters.SECONDARY}{value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
                     UIElementBridge.HandleMessage(valueMessage);
 
                     flow.SetValue(intFieldId, intFieldElementId);
@@ -119,4 +119,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

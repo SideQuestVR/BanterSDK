@@ -30,9 +30,7 @@ namespace Banter.SDK
 
         public SqAvatar AvatarDetails = null;
         
-#if BASIS_BUNDLE_MANAGEMENT
         BasisLoadableBundle _loadableBundle;
-#endif
         private bool _loadStarted;
 
         internal override void StartStuff()
@@ -104,7 +102,6 @@ namespace Banter.SDK
 
                     AvatarDetails = a;
                     
-#if BASIS_BUNDLE_MANAGEMENT
                     _loadableBundle = new BasisLoadableBundle();
                     Debug.Log($"Pedestal avatar url: {Get.GetUrl(EnvType.PROD, UrlType.CDN)}/file/{a.high_avatar_files_id}/high.bee, author: {a.author_users_id}");
                     _loadableBundle.UnlockPassword = a.author_users_id + "42069";
@@ -113,7 +110,6 @@ namespace Banter.SDK
                     BasisProgressReport BeeProgressReport = new BasisProgressReport();
                     BundledContentHolder.Selector PoliceMode = BundledContentHolder.Selector.Avatar;
                     go = await BasisLoadHandler.LoadGameObjectBundle(_loadableBundle, false, BeeProgressReport, cancellationToken, transform.position, transform.rotation, Vector3.one, false, PoliceMode, transform, false);
-#endif
                     var comp = this;
                     if (comp == null || gameObject == null)
                     {

@@ -1,0 +1,45 @@
+{
+    "name": "BS.SDKEditor.Tests",
+    "rootNamespace": "BS.SDKEditor.Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "BS.SDKEditor",
+        "BS.SDK",
+        "BS.AudioStream.Core",
+        "BasisBundleManagement",
+        "Banter.VisualScripting",
+        "GUID:af6e7370d62c866409111f9afdb8c47a",
+        "Unity.InputSystem",
+        "SideQuest.Ora",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow",
+        "Unity.VisualScripting.State",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "SideQuest.Ora.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.sidequest.flexabody",
+            "expression": "0.0.1",
+            "define": "BANTER_FLEX"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -7,7 +7,7 @@ using UnityEditor.PackageManager;
 
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     [InitializeOnLoad]
     public static class PackageManagerUtility

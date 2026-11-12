@@ -4,7 +4,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Represents a texture-to-material mapping from GLTF
@@ -324,7 +324,7 @@ namespace Banter.SDK
 
                 case "BLEND":
                     // Alpha blending - use Transparent with vertex color support
-                    targetShader = Shader.Find("Unlit/Transparent");
+                    targetShader = Shader.Find("BS/Unlit/Transparent");
                     if (targetShader != null)
                     {
                         material.shader = targetShader;
@@ -333,7 +333,7 @@ namespace Banter.SDK
                         {
                             material.SetFloat("_Mode", 3); // Transparent mode
                         }
-                        Debug.Log($"Applied Unlit/Transparent to material '{material.name}'");
+                        Debug.Log($"Applied BS/Unlit/Transparent to material '{material.name}'");
                     }
                     break;
 

@@ -1,12 +1,11 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     public enum UIFlexDirection
     {
@@ -43,8 +42,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Set UI Flexbox")]
     [UnitShortTitle("Set UI Flexbox")]
-    [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Layout")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIFlexbox : Unit
     {
         [DoNotSerialize]
@@ -79,7 +78,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -105,7 +105,7 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUIFlexbox] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set flex-direction
                     string flexDirValue = flexDir switch
                     {
@@ -116,7 +116,7 @@ namespace Banter.VisualScripting
                         _ => "column"
                     };
                     SendStyleCommand(panelId, elemId, "flex-direction", flexDirValue);
-                    
+
                     // Set justify-content
                     string justifyValue = justifyAlign switch
                     {
@@ -129,7 +129,7 @@ namespace Banter.VisualScripting
                         _ => "flex-start"
                     };
                     SendStyleCommand(panelId, elemId, "justify-content", justifyValue);
-                    
+
                     // Set align-items
                     string alignValue = alignItemsVal switch
                     {
@@ -140,7 +140,7 @@ namespace Banter.VisualScripting
                         _ => "stretch"
                     };
                     SendStyleCommand(panelId, elemId, "align-items", alignValue);
-                    
+
                     // Set flex-wrap
                     string wrapValue = flexWrapVal switch
                     {
@@ -150,7 +150,7 @@ namespace Banter.VisualScripting
                         _ => "nowrap"
                     };
                     SendStyleCommand(panelId, elemId, "flex-wrap", wrapValue);
-                    
+
                     // Set flex-grow and flex-shrink
                     SendStyleCommand(panelId, elemId, "flex-grow", flexGrowVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     SendStyleCommand(panelId, elemId, "flex-shrink", flexShrinkVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -181,4 +181,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

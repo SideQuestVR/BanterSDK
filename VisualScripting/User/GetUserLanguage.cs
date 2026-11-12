@@ -1,16 +1,15 @@
-#if BANTER_VISUAL_SCRIPTING
 using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Data.Common;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get Local User Language")]
     [UnitShortTitle("Get User Language")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUserLanguage : Unit
     {
         [DoNotSerialize]
@@ -18,10 +17,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            info = ValueOutput("Language", (f) => {
-                return BanterScene.Instance().events.GetUserLanguage();
+            info = ValueOutput("Language", (f) =>
+            {
+                return BSScene.Instance().events.GetUserLanguage();
             });
         }
     }
 }
-#endif

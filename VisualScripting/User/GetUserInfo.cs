@@ -1,16 +1,15 @@
-#if BANTER_VISUAL_SCRIPTING
 using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Data.Common;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get User Info")]
     [UnitShortTitle("Get User")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUserInfo : Unit
     {
         [DoNotSerialize]
@@ -23,8 +22,9 @@ namespace Banter.VisualScripting
         {
             idOrName = ValueInput("id, uid, or name", string.Empty);
 
-            info = ValueOutput("Name", (f) => {
-                var data = BanterScene.Instance().users.FirstOrDefault(user => 
+            info = ValueOutput("Name", (f) =>
+            {
+                var data = BSScene.Instance().users.FirstOrDefault(user =>
                 {
                     var value = f.GetValue<string>(idOrName);
 
@@ -38,7 +38,7 @@ namespace Banter.VisualScripting
                 {
                     return null;
                 }
-                return new BanterUser()
+                return new BSUser()
                 {
                     name = data.name,
                     id = data.id,
@@ -53,8 +53,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Get Local User Info")]
     [UnitShortTitle("Get Local User")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetLocalUserInfo : Unit
     {
         [DoNotSerialize]
@@ -64,12 +64,12 @@ namespace Banter.VisualScripting
         {
             info = ValueOutput("User Info", (f) =>
             {
-                var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
+                var data = BSScene.Instance().users.FirstOrDefault(user => user.isLocal);
                 if (data == null)
                 {
                     return null;
                 }
-                return new BanterUser()
+                return new BSUser()
                 {
                     name = data.name,
                     id = data.id,
@@ -82,4 +82,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

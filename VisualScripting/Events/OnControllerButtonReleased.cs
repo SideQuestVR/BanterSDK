@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On Controller Button Released")]
     [UnitShortTitle("Button Released")]
-    [UnitCategory("Events\\Banter\\Controller")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Controller")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnControllerButtonReleased : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -42,4 +41,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

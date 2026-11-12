@@ -1,18 +1,17 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
 using System.Collections.Generic;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Dropdown")]
     [UnitShortTitle("Create UI Dropdown")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIDropdown : Unit
     {
         [DoNotSerialize]
@@ -49,9 +48,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var choicesList = flow.GetValue<List<string>>(choices);
@@ -61,7 +61,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIDropdown] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIDropdown] BSUIPanel component not found on GameObject.");
                     flow.SetValue(dropdownId, "");
                     return outputTrigger;
                 }
@@ -131,4 +131,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

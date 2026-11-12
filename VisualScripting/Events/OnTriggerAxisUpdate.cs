@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On Trigger Axis Update")]
     [UnitShortTitle("Trigger Update")]
-    [UnitCategory("Events\\Banter\\Controller")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Controller")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnTriggerAxisUpdate : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -42,4 +41,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif
