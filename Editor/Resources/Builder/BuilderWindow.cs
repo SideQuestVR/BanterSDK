@@ -1225,6 +1225,7 @@ public class BuilderWindow : EditorWindow
 
     private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null, string path = null, Action<float> onProgress = null)
     {
+
         var file = path == null ? (Path.Join(Path.Join(assetBundleRoot, assetBundleDirectory), name)) : path;
         if (File.Exists(file) || bytes != null)
         {
@@ -1255,6 +1256,7 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadWorldFile(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null)
     {
         var file = Path.Join(Path.Join(assetBundleRoot, assetBundleDirectory), name);
+
         if (File.Exists(file))
         {
             status.AddStatus("Upload started: " + file + "...");

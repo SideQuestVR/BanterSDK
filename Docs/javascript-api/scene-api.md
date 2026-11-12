@@ -1,5 +1,7 @@
 # Scene API
 
+The scene singleton: what's in the space, waiting for it to load, finding and creating objects, shared state, sending players to other spaces and websites, and device checks.
+
 ## Getting the Scene
 
 ```js
