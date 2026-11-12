@@ -23,6 +23,12 @@ namespace BS
     [AddComponentMenu("BS/Camera Feed")]
     public class BSCameraFeed : MonoBehaviour
     {
+        /// <summary>Client hook: raised as each one is enabled, so the client takes up feeds as they arrive instead
+        /// of searching the scene for them.</summary>
+        public static event System.Action<BSCameraFeed> Enabled;
+
+        void OnEnable() => Enabled?.Invoke(this);
+
         [Tooltip("The id monitors, cuts and recordings use for this feed. Unique within the space; defaults to the GameObject's name.")]
         public string feedId;
 
