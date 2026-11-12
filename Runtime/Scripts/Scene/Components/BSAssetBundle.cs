@@ -730,6 +730,11 @@ namespace BS
                 // rendering was project configuration (BRG stripping + URP pipeline
                 // asset settings), not shader incompatibility.
 
+#if !UNITY_EDITOR
+                var walkClock = System.Diagnostics.Stopwatch.StartNew();
+                var walked = 0;
+                var walkFrame = Time.frameCount;
+#endif
                 foreach (GameObject thisgo in reference.GetRootGameObjects())
                 {
                     foreach (Transform transform in thisgo.GetComponentsInChildren<Transform>(true))
@@ -803,8 +808,16 @@ namespace BS
                         }
 
                         BSText.RepairFont(transform.gameObject.GetComponent<TMP_Text>());
+#if !UNITY_EDITOR
+                        walked++;
+#endif
                     }
                 }
+#if !UNITY_EDITOR
+                Debug.Log("[LoadTiming] world setup walk over " + walked + " objects: "
+                          + walkClock.Elapsed.TotalMilliseconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)
+                          + " ms (frame " + walkFrame + ").");
+#endif
             }
         }
 

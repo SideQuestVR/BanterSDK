@@ -210,8 +210,171 @@ namespace BS
         internal const bool DisabledForTests = false;
 #endif
 
-        /// <summary><see cref="DisabledForTests"/>, read through a property so a player build's constant is not a dead branch.</summary>
-        static bool GuardOff => DisabledForTests;
+        /// <summary><see cref="DisabledForTests"/>, read through a property so a player build's constant is not a dead branch.
+        /// A development player can also be switched off to measure the guard (<see cref="OffForMeasurement"/>).</summary>
+        static bool GuardOff => DisabledForTests || OffForMeasurement;
+
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+        static int offForMeasurement = -1;
+
+        /// <summary>
+        /// Development players only, to measure what judging costs in a world's activation frame: while the file
+        /// files/memdiag/guard-off exists when the app starts, world scenes get no verdict and WorldActivation holds nothing,
+        /// as <see cref="DisabledForTests"/> does in the editor. The pre-load bundle check is not affected. A release player
+        /// has no such switch.
+        /// </summary>
+        static bool OffForMeasurement
+        {
+            get
+            {
+                if (offForMeasurement >= 0) return offForMeasurement == 1;
+                var off = false;
+                try
+                {
+                    var dir = Application.persistentDataPath;
+                    if (string.IsNullOrEmpty(dir)) return false; // too early: ask again later
+                    off = System.IO.File.Exists(System.IO.Path.Combine(dir, "memdiag", "guard-off"));
+                }
+                catch (Exception)
+                {
+                    off = false;
+                }
+                offForMeasurement = off ? 1 : 0;
+                if (off) Debug.LogWarning("[UnityEventGuard] OFF for a measurement (development build, files/memdiag/guard-off): worlds load unjudged.");
+                return off;
+            }
+        }
+#else
+        const bool OffForMeasurement = false;
+#endif
+
+#if !UNITY_EDITOR
+        // ---- load timing (players, release too): where a world's activation frame goes. Unity activates scenes inside
+        // EarlyUpdate.UpdatePreloading, which BeforeSceneActivation and AfterSceneActivation bracket.
+        static double timingStepStart;
+        static double timingSceneLoadedAt;
+        static string timingScene;
+        static double timingJudgeMs = -1;
+        static string timingJudgeParts;
+
+        static double TimingNow => Time.realtimeSinceStartupAsDouble;
+
+        static string TimingMs(double ms) => ms.ToString("F0", System.Globalization.CultureInfo.InvariantCulture);
+
+        static void TimingStepStarted()
+        {
+            timingStepStart = TimingNow;
+            timingSceneLoadedAt = 0;
+            timingJudgeMs = -1;
+            timingJudgeParts = null;
+        }
+
+        static void TimingSceneLoaded(Scene scene)
+        {
+            if (timingSceneLoadedAt > 0) return;
+            timingSceneLoadedAt = TimingNow;
+            timingScene = scene.name;
+        }
+
+        static void TimingStepEnded()
+        {
+            if (timingSceneLoadedAt <= 0) return;
+            var unity = (timingSceneLoadedAt - timingStepStart) * 1000.0;
+            var total = (TimingNow - timingStepStart) * 1000.0;
+            var guard = timingJudgeMs < 0 ? 0 : timingJudgeMs;
+            Debug.Log("[LoadTiming] activation of '" + Clean(timingScene) + "' (frame " + Time.frameCount + "): " + TimingMs(total)
+                      + " ms in Unity's preloading step = Unity's activation up to sceneLoaded " + TimingMs(unity) + " ms + guard "
+                      + (timingJudgeMs < 0 ? (GuardOff ? "off" : "not run") : TimingMs(guard) + " ms (" + timingJudgeParts + ")")
+                      + " + other sceneLoaded handlers and the rest of the step " + TimingMs(total - unity - guard) + " ms.");
+            if (timingScene != "Void")
+            {
+                timingMarks.Clear();
+                timingMarks.Add(new KeyValuePair<string, double>("rest of EarlyUpdate", TimingNow));
+                timingFramesLeft = 2;
+            }
+            timingSceneLoadedAt = 0;
+        }
+
+        // Frame phases after a world's activation step, this frame and the next: where the rest of the long frame goes.
+        struct TimingMarkInitialization { }
+        struct TimingMarkEarlyUpdate { }
+        struct TimingMarkFixedUpdate { }
+        struct TimingMarkPreUpdate { }
+        struct TimingMarkUpdate { }
+        struct TimingMarkPreLateUpdate { }
+        struct TimingMarkPostLateUpdate { }
+        struct TimingMarkFrameEnd { }
+
+        const string TimingFrameEnd = "between frames";
+        static readonly List<KeyValuePair<string, double>> timingMarks = new List<KeyValuePair<string, double>>();
+        static int timingFramesLeft;
+        static bool timingMarksInstalled;
+
+        static void TimingMark(string segment)
+        {
+            try
+            {
+                TimingMarkCore(segment);
+            }
+            catch (Exception)
+            {
+                timingFramesLeft = 0; // logging only
+            }
+        }
+
+        static void TimingMarkCore(string segment)
+        {
+            if (timingFramesLeft <= 0) return;
+            timingMarks.Add(new KeyValuePair<string, double>(segment, TimingNow));
+            if (segment != TimingFrameEnd || --timingFramesLeft > 0) return;
+            var text = new StringBuilder();
+            for (var i = 1; i < timingMarks.Count; i++)
+            {
+                if (i > 1) text.Append(", ");
+                text.Append(timingMarks[i - 1].Key).Append(' ').Append(TimingMs((timingMarks[i].Value - timingMarks[i - 1].Value) * 1000.0));
+            }
+            Debug.Log("[LoadTiming] after the activation step, this frame and the next (ms per part): " + text);
+            timingMarks.Clear();
+        }
+
+        static PlayerLoopSystem TimingMarkSystem<T>(string segment) =>
+            new PlayerLoopSystem { type = typeof(T), updateDelegate = () => TimingMark(segment) };
+
+        static void InstallTimingMarks()
+        {
+            if (timingMarksInstalled || !Application.isPlaying) return;
+            timingMarksInstalled = true;
+            try
+            {
+                var loop = PlayerLoop.GetCurrentPlayerLoop();
+                var phases = loop.subSystemList;
+                for (var i = 0; i < phases.Length; i++)
+                {
+                    var phase = phases[i].type;
+                    var systems = new List<PlayerLoopSystem>(phases[i].subSystemList ?? Array.Empty<PlayerLoopSystem>());
+                    if (phase == typeof(UnityEngine.PlayerLoop.Initialization)) systems.Insert(0, TimingMarkSystem<TimingMarkInitialization>("Initialization"));
+                    else if (phase == typeof(UnityEngine.PlayerLoop.EarlyUpdate)) systems.Insert(0, TimingMarkSystem<TimingMarkEarlyUpdate>("EarlyUpdate"));
+                    else if (phase == typeof(UnityEngine.PlayerLoop.FixedUpdate)) systems.Insert(0, TimingMarkSystem<TimingMarkFixedUpdate>("FixedUpdate"));
+                    else if (phase == typeof(UnityEngine.PlayerLoop.PreUpdate)) systems.Insert(0, TimingMarkSystem<TimingMarkPreUpdate>("PreUpdate"));
+                    else if (phase == typeof(UnityEngine.PlayerLoop.Update)) systems.Insert(0, TimingMarkSystem<TimingMarkUpdate>("Update (Start, Update)"));
+                    else if (phase == typeof(UnityEngine.PlayerLoop.PreLateUpdate)) systems.Insert(0, TimingMarkSystem<TimingMarkPreLateUpdate>("PreLateUpdate (LateUpdate)"));
+                    else if (phase == typeof(UnityEngine.PlayerLoop.PostLateUpdate))
+                    {
+                        systems.Insert(0, TimingMarkSystem<TimingMarkPostLateUpdate>("PostLateUpdate (rendering)"));
+                        systems.Add(TimingMarkSystem<TimingMarkFrameEnd>(TimingFrameEnd));
+                    }
+                    else continue;
+                    phases[i].subSystemList = systems.ToArray();
+                }
+                loop.subSystemList = phases;
+                PlayerLoop.SetPlayerLoop(loop);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[LoadTiming] could not add the frame marks: " + e.Message);
+            }
+        }
+#endif
 
         /// <summary>
         /// Refuse a scene outside the build that matches nothing while world content may be loaded (R6-3). On in
@@ -279,6 +442,9 @@ namespace BS
             WorldActivation.SetInertProbe(() => GuardOff);
 #endif
             InstallFrameHook();
+#if !UNITY_EDITOR
+            InstallTimingMarks();
+#endif
         }
 
         /// <summary>
@@ -290,6 +456,9 @@ namespace BS
         /// </summary>
         static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+#if !UNITY_EDITOR
+            try { TimingSceneLoaded(scene); } catch (Exception) { } // logging only
+#endif
             if (GuardOff) return;
             for (var i = 0; i < pendingWorlds.Count; i++)
             {
@@ -786,6 +955,9 @@ namespace BS
         /// </summary>
         static void BeforeSceneActivation()
         {
+#if !UNITY_EDITOR
+            try { TimingStepStarted(); } catch (Exception) { } // logging only
+#endif
             if (GuardOff)
             {
 #if GREENFIELD_PROJECT
@@ -809,6 +981,9 @@ namespace BS
         /// </summary>
         static void AfterSceneActivation()
         {
+#if !UNITY_EDITOR
+            try { TimingStepEnded(); } catch (Exception) { } // logging only
+#endif
 #if GREENFIELD_PROJECT
             WorldActivation.SetActivationInProgress(false);
             if (GuardOff) return;
@@ -869,6 +1044,11 @@ namespace BS
 
             internal void Judge(Scene scene)
             {
+#if !UNITY_EDITOR
+                var clock = System.Diagnostics.Stopwatch.StartNew();
+                double allMs = 0, rootsMs = 0, scanMs = 0;
+                var objects = 0;
+#endif
                 judged = true;
                 if (scene.IsValid()) worldScenes.Add(scene.handle);
                 List<GameObject> escaped = null;
@@ -876,8 +1056,18 @@ namespace BS
                 try
                 {
                     var all = Application.isPlaying ? AllGameObjects() : null; // one scan for both
+#if !UNITY_EDITOR
+                    allMs = clock.Elapsed.TotalMilliseconds;
+                    objects = all != null ? all.Length : 0;
+#endif
                     escaped = NewPersistentRoots(all);
+#if !UNITY_EDITOR
+                    rootsMs = clock.Elapsed.TotalMilliseconds;
+#endif
                     var report = SanitizeScene(scene, escaped, all);
+#if !UNITY_EDITOR
+                    scanMs = clock.Elapsed.TotalMilliseconds;
+#endif
                     passed = !report.Failed;
                     if (!passed) failure = report.FailureReason;
                 }
@@ -920,6 +1110,20 @@ namespace BS
                 finally
                 {
                     if (!passed) FailClosed(scene, escaped, failure, generation);
+#if !UNITY_EDITOR
+                    try
+                    {
+                        var endMs = clock.Elapsed.TotalMilliseconds;
+                        timingJudgeMs = endMs;
+                        timingJudgeParts = "listing all " + objects + " GameObjects " + TimingMs(allMs) + " ms, new persistent roots "
+                                           + TimingMs(rootsMs - allMs) + " ms, scan " + TimingMs(scanMs - rootsMs)
+                                           + " ms, releasing graphs " + TimingMs(endMs - scanMs) + " ms";
+                    }
+                    catch (Exception)
+                    {
+                        // logging only
+                    }
+#endif
                 }
             }
 
@@ -1106,6 +1310,9 @@ namespace BS
             }
             walk.Finish();
             SweepNewClips(report); // clips only a graph, a spawned copy or a Timeline track would reach
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+            walk.LogProfile(scene.name);
+#endif
             report.Log();
             return report;
         }
@@ -1579,6 +1786,37 @@ namespace BS
             readonly List<Removal> removals = new List<Removal>();
             /// <summary>Legacy Animations in the content: refreshed after their clips' events change (probe Q11).</summary>
             readonly List<Animation> legacyAnimations = new List<Animation>();
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+            // Development players: where the scan's time goes ([LoadTiming] scan profile).
+            readonly Dictionary<Type, long> profTypeTicks = new Dictionary<Type, long>();
+            readonly Dictionary<Type, int> profTypeCount = new Dictionary<Type, int>();
+            long profGraphTicks, profGraphMaxTicks, profDrainTicks, profCallsTicks, profClipsTicks, profRemoveTicks;
+            int profGraphCalls, profGraphKept, profComponents, profDrained;
+            string profGraphMaxName;
+
+            static double ProfMs(long ticks) => ticks * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+
+            internal void LogProfile(string sceneName)
+            {
+                var types = new List<KeyValuePair<Type, long>>(profTypeTicks);
+                types.Sort((a, b) => b.Value.CompareTo(a.Value));
+                var top = new StringBuilder();
+                long hierarchy = 0;
+                foreach (var pair in types) hierarchy += pair.Value;
+                for (var i = 0; i < types.Count && i < 8; i++)
+                {
+                    if (i > 0) top.Append(", ");
+                    top.Append(types[i].Key.Name).Append(' ').Append(TimingMs(ProfMs(types[i].Value))).Append(" ms (")
+                       .Append(profTypeCount[types[i].Key]).Append(')');
+                }
+                Debug.Log("[LoadTiming] scan profile of '" + Clean(sceneName) + "': components " + TimingMs(ProfMs(hierarchy)) + " ms over "
+                          + profComponents + " (graph serialization inside: " + TimingMs(ProfMs(profGraphTicks)) + " ms in " + profGraphCalls
+                          + " calls, " + profGraphKept + " from kept lists, largest " + TimingMs(ProfMs(profGraphMaxTicks)) + " ms on " + (profGraphMaxName ?? "-")
+                          + "); queued assets/prefabs " + TimingMs(ProfMs(profDrainTicks)) + " ms (" + profDrained + "); asset-target calls "
+                          + TimingMs(ProfMs(profCallsTicks)) + " ms; clips " + TimingMs(ProfMs(profClipsTicks)) + " ms; removals "
+                          + TimingMs(ProfMs(profRemoveTicks)) + " ms. Slowest types (incl. their graphs): " + top);
+            }
+#endif
 
             internal Walk(Func<GameObject, bool> inScope, Report report, bool scrub = false)
             {
@@ -1599,7 +1837,14 @@ namespace BS
 
             internal void Finish()
             {
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                var f0 = System.Diagnostics.Stopwatch.GetTimestamp();
+#endif
                 Drain();
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                var f1 = System.Diagnostics.Stopwatch.GetTimestamp();
+                profDrainTicks += f1 - f0;
+#endif
                 if (scrub) return;
                 // An asset target passes only when the content itself reaches that asset; built-in shared resources do not.
                 foreach (var call in assetTargetCalls)
@@ -1617,7 +1862,15 @@ namespace BS
                         report.Fail("could not judge a persistent call: " + Printable(e.Message));
                     }
                 }
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                var f2 = System.Diagnostics.Stopwatch.GetTimestamp();
+                profCallsTicks += f2 - f1;
+#endif
                 Drain();
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                var f3 = System.Diagnostics.Stopwatch.GetTimestamp();
+                profDrainTicks += f3 - f2;
+#endif
                 try
                 {
                     Clips();
@@ -1626,8 +1879,15 @@ namespace BS
                 {
                     report.Fail("could not judge animation events: " + Printable(e.Message));
                 }
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                var f4 = System.Diagnostics.Stopwatch.GetTimestamp();
+                profClipsTicks += f4 - f3;
+#endif
                 // Second phase: everything is judged, so a removed component's OnDisable/OnDestroy can only fire judged calls.
                 foreach (var removal in removals) Remove(removal);
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                profRemoveTicks += System.Diagnostics.Stopwatch.GetTimestamp() - f4;
+#endif
             }
 
             void Remove(Removal removal)
@@ -1688,6 +1948,9 @@ namespace BS
                 {
                     var next = pending.Dequeue();
                     if (next == null) continue;
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                    profDrained++;
+#endif
                     if (next is GameObject prefab) Hierarchy(prefab);
                     else Asset(next);
                 }
@@ -1711,6 +1974,9 @@ namespace BS
                 foreach (var component in root.GetComponentsInChildren<Component>(true))
                 {
                     if (component == null) continue; // missing script
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                    var c0 = System.Diagnostics.Stopwatch.GetTimestamp();
+#endif
                     try
                     {
                         if (component is Transform) ClearHideFlags(component.gameObject);
@@ -1722,6 +1988,14 @@ namespace BS
                         // Fail closed: the rest of this component went unjudged.
                         report.Fail("could not judge a " + Clean(component.GetType().FullName) + ": " + Printable(e.Message));
                     }
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                    var type = component.GetType();
+                    profTypeTicks.TryGetValue(type, out var ticks);
+                    profTypeTicks[type] = ticks + System.Diagnostics.Stopwatch.GetTimestamp() - c0;
+                    profTypeCount.TryGetValue(type, out var count);
+                    profTypeCount[type] = count + 1;
+                    profComponents++;
+#endif
                 }
             }
 
@@ -1826,8 +2100,25 @@ namespace BS
             /// </summary>
             void GraphContent(UnityObject graphOwner)
             {
-                var data = Unity.VisualScripting.Serialization.Serialize(graphOwner, true);
-                var references = data.objectReferences;
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                var g0 = System.Diagnostics.Stopwatch.GetTimestamp();
+#endif
+                // What the graph points at: the list Unity deserialized it from, which Visual Scripting keeps for this (taken
+                // once; every Unity object the graph holds came from it), or else the graph serialized again, the slow way.
+                var references = TakeLoadedReferences(graphOwner);
+                var kept = references != null;
+                if (!kept) references = Unity.VisualScripting.Serialization.Serialize(graphOwner, true).objectReferences;
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+                var g = System.Diagnostics.Stopwatch.GetTimestamp() - g0;
+                profGraphTicks += g;
+                profGraphCalls++;
+                if (kept) profGraphKept++;
+                if (g > profGraphMaxTicks)
+                {
+                    profGraphMaxTicks = g;
+                    profGraphMaxName = graphOwner.GetType().Name + " '" + Clean(graphOwner.name) + "' (" + (kept ? "kept list" : "serialized") + ")";
+                }
+#endif
                 if (references != null)
                 {
                     foreach (var reference in references) Enqueue(reference);
@@ -1844,6 +2135,25 @@ namespace BS
                         Declarations((macro.graph as Unity.VisualScripting.IGraphWithVariables)?.variables, graphOwner);
                         break;
                 }
+            }
+
+            /// <summary>
+            /// The list a graph's owner was deserialized from (kept by Greenfield's Visual Scripting fork), handed over once;
+            /// null otherwise. Players only: a creator project has stock Visual Scripting (no kept list), and in the editor
+            /// graphs are edited in memory after they load, so it keeps serializing them.
+            /// </summary>
+            static UnityObject[] TakeLoadedReferences(UnityObject owner)
+            {
+#if GREENFIELD_PROJECT && !UNITY_EDITOR
+                switch (owner)
+                {
+                    case Unity.VisualScripting.LudiqBehaviour behaviour:
+                        return behaviour.TakeLoadedObjectReferences();
+                    case Unity.VisualScripting.LudiqScriptableObject asset:
+                        return asset.TakeLoadedObjectReferences();
+                }
+#endif
+                return null;
             }
 
             void Declarations(Unity.VisualScripting.VariableDeclarations declarations, UnityObject owner)
