@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace BS
@@ -18,6 +19,9 @@ namespace BS
     ///
     /// The path is the kit manifest's own `path` field, relative to the package's Assets root:
     /// <c>CartoonCubeWorld/Prefabs/Props/Apple.prefab</c>.
+    ///
+    /// When the app ships the kit as downloadable bundles it sets <see cref="BundleResolver"/>; the prefab then comes
+    /// from the app's own content downloader (not from a space's bundles), and Resources stays the fallback.
     /// </remarks>
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
@@ -39,14 +43,28 @@ namespace BS
         /// </remarks>
         const string ResourcePrefix = "Assets/";
 
-        /// <summary>Where the prefabs live in the project, for the editor-only fallback.</summary>
-        const string PackageAssetRoot =
-            "Packages/com.sidequest.low-poly-assets-processed/Resources/Assets/";
+        /// <summary>Where the prefabs live in the project, for the editor-only fallback: the kit tree, or its older home under Resources.</summary>
+        static readonly string[] PackageAssetRoots =
+        {
+            "Packages/com.sidequest.low-poly-assets-processed/Kit/Assets/",
+            "Packages/com.sidequest.low-poly-assets-processed/Resources/Assets/",
+        };
+
+        /// <summary>
+        /// Set by the app when the kit ships as downloadable bundles: loads the prefab for a manifest path, downloading
+        /// it first if needed. A null result (or an exception) falls back to Resources and the editor's AssetDatabase.
+        /// Null (the default) keeps the synchronous Resources path.
+        /// </summary>
+        public static Func<string, Task<GameObject>> BundleResolver;
 
         GameObject item;
 
+        /// <summary>Bumped by every setup and by destroy: a bundle load that finishes for an older one is dropped.</summary>
+        int setupVersion;
+
         void SetupKitAsset()
         {
+            setupVersion++;
             if (item != null)
             {
                 Destroy(item);
@@ -71,7 +89,30 @@ namespace BS
                 return;
             }
 
-            var prefab = Resolve(path);
+            if (BundleResolver != null)
+            {
+                _ = SetupFromBundleAsync(path, setupVersion);
+                return;
+            }
+            SpawnFrom(Resolve(path), path);
+        }
+
+        async Task SetupFromBundleAsync(string manifestPath, int version)
+        {
+            GameObject prefab = null;
+            try { prefab = await BundleResolver(manifestPath); }
+            catch (Exception e)
+            {
+                if (this != null && version == setupVersion)
+                    Debug.LogWarning($"[BSKitAsset] '{name}': the kit bundle for '{manifestPath}' did not load ({e.Message}); trying Resources.");
+            }
+            // Destroyed, or pointed at another path, while the bundle loaded: that newer setup owns the object.
+            if (this == null || version != setupVersion) return;
+            SpawnFrom(prefab != null ? prefab : Resolve(manifestPath), manifestPath);
+        }
+
+        void SpawnFrom(GameObject prefab, string path)
+        {
             if (prefab == null)
             {
                 // The resolved Resources key is in the message on purpose: the manifest path and the
@@ -125,8 +166,11 @@ namespace BS
             if (prefab != null) return prefab;
 
 #if UNITY_EDITOR
-            prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(PackageAssetRoot + manifestPath);
-            if (prefab != null) return prefab;
+            foreach (var root in PackageAssetRoots)
+            {
+                prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(root + manifestPath);
+                if (prefab != null) return prefab;
+            }
 #endif
 
             return null;
@@ -141,6 +185,7 @@ namespace BS
 
         internal override void DestroyStuff()
         {
+            setupVersion++; // a bundle load still in flight must not spawn into a destroyed component
             if (item != null)
             {
                 scene.kitItems.Remove(item);
