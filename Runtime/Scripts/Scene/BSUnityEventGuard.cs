@@ -290,6 +290,9 @@ namespace BS
             {
                 timingMarks.Clear();
                 timingMarks.Add(new KeyValuePair<string, double>("rest of EarlyUpdate", TimingNow));
+                timingDetail.Clear();
+                timingDetailOpen = null;
+                timingGcAtStep = GC.CollectionCount(0);
                 timingFramesLeft = 2;
             }
             timingSceneLoadedAt = 0;
@@ -335,6 +338,58 @@ namespace BS
             }
             Debug.Log("[LoadTiming] after the activation step, this frame and the next (ms per part): " + text);
             timingMarks.Clear();
+            TimingDetailMark(null);
+            var slow = new StringBuilder();
+            foreach (var step in timingDetail)
+            {
+                if (slow.Length > 0) slow.Append(", ");
+                slow.Append(step.Key).Append(' ').Append(TimingMs(step.Value));
+            }
+            Debug.Log("[LoadTiming] steps of 5 ms or more in EarlyUpdate and PostLateUpdate, same frames (ms): "
+                      + (slow.Length > 0 ? slow.ToString() : "none") + "; garbage collections " + (GC.CollectionCount(0) - timingGcAtStep) + ".");
+            timingDetail.Clear();
+        }
+
+        // Per-step marks in EarlyUpdate and PostLateUpdate (where Unity loads, unloads and renders): which of its own steps
+        // holds the frames after a world's activation. Only recorded while the frame marks are (two frames after one).
+        static readonly List<KeyValuePair<string, double>> timingDetail = new List<KeyValuePair<string, double>>();
+        static string timingDetailOpen;
+        static double timingDetailStart;
+        static int timingGcAtStep;
+
+        static void TimingDetailMark(string next)
+        {
+            try
+            {
+                var now = TimingNow;
+                if (timingDetailOpen != null && timingFramesLeft > 0)
+                {
+                    var ms = (now - timingDetailStart) * 1000.0;
+                    if (ms >= 5.0) timingDetail.Add(new KeyValuePair<string, double>(timingDetailOpen, ms));
+                }
+                timingDetailOpen = timingFramesLeft > 0 ? next : null;
+                timingDetailStart = now;
+            }
+            catch (Exception)
+            {
+                timingDetailOpen = null; // logging only
+            }
+        }
+
+        struct TimingDetailMarker { }
+
+        /// <summary>Each step of a phase with a mark before it, and one after the last.</summary>
+        static List<PlayerLoopSystem> WithDetailMarks(string phase, IList<PlayerLoopSystem> systems)
+        {
+            var marked = new List<PlayerLoopSystem>(systems.Count * 2 + 1);
+            foreach (var system in systems)
+            {
+                var name = phase + "." + (system.type != null ? system.type.Name : "?");
+                marked.Add(new PlayerLoopSystem { type = typeof(TimingDetailMarker), updateDelegate = () => TimingDetailMark(name) });
+                marked.Add(system);
+            }
+            marked.Add(new PlayerLoopSystem { type = typeof(TimingDetailMarker), updateDelegate = () => TimingDetailMark(null) });
+            return marked;
         }
 
         static PlayerLoopSystem TimingMarkSystem<T>(string segment) =>
@@ -353,13 +408,18 @@ namespace BS
                     var phase = phases[i].type;
                     var systems = new List<PlayerLoopSystem>(phases[i].subSystemList ?? Array.Empty<PlayerLoopSystem>());
                     if (phase == typeof(UnityEngine.PlayerLoop.Initialization)) systems.Insert(0, TimingMarkSystem<TimingMarkInitialization>("Initialization"));
-                    else if (phase == typeof(UnityEngine.PlayerLoop.EarlyUpdate)) systems.Insert(0, TimingMarkSystem<TimingMarkEarlyUpdate>("EarlyUpdate"));
+                    else if (phase == typeof(UnityEngine.PlayerLoop.EarlyUpdate))
+                    {
+                        systems = WithDetailMarks("EarlyUpdate", systems);
+                        systems.Insert(0, TimingMarkSystem<TimingMarkEarlyUpdate>("EarlyUpdate"));
+                    }
                     else if (phase == typeof(UnityEngine.PlayerLoop.FixedUpdate)) systems.Insert(0, TimingMarkSystem<TimingMarkFixedUpdate>("FixedUpdate"));
                     else if (phase == typeof(UnityEngine.PlayerLoop.PreUpdate)) systems.Insert(0, TimingMarkSystem<TimingMarkPreUpdate>("PreUpdate"));
                     else if (phase == typeof(UnityEngine.PlayerLoop.Update)) systems.Insert(0, TimingMarkSystem<TimingMarkUpdate>("Update (Start, Update)"));
                     else if (phase == typeof(UnityEngine.PlayerLoop.PreLateUpdate)) systems.Insert(0, TimingMarkSystem<TimingMarkPreLateUpdate>("PreLateUpdate (LateUpdate)"));
                     else if (phase == typeof(UnityEngine.PlayerLoop.PostLateUpdate))
                     {
+                        systems = WithDetailMarks("PostLateUpdate", systems);
                         systems.Insert(0, TimingMarkSystem<TimingMarkPostLateUpdate>("PostLateUpdate (rendering)"));
                         systems.Add(TimingMarkSystem<TimingMarkFrameEnd>(TimingFrameEnd));
                     }
