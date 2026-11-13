@@ -655,11 +655,14 @@ namespace BS
         /// SideQuest CDN does — Basis' own connector prefetch relies on it); a host that ignores it would
         /// return the full body, which we still slice down to the header.
         /// </summary>
-        public static async Task<byte[]> PeekHeader(string url, int count)
+        public static Task<byte[]> PeekHeader(string url, int count) => PeekHeader(url, count, SMALL_REQUEST_TIMEOUT_SECONDS);
+
+        /// <summary><see cref="PeekHeader(string, int)"/> with its own timeout (a scene bundle's sniff retries a short one).</summary>
+        internal static async Task<byte[]> PeekHeader(string url, int count, int timeoutSeconds)
         {
             using (UnityWebRequest uwr = UnityWebRequest.Get(url))
             {
-                uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
+                uwr.timeout = timeoutSeconds;
                 uwr.SetRequestHeader("Range", "bytes=0-" + (count - 1));
                 await uwr.SendWebRequest();
                 if (uwr.result != UnityWebRequest.Result.Success)
