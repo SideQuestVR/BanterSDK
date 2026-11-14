@@ -19,6 +19,16 @@ namespace BS
         public string icon;
     }
 
+    /// <summary>The fields a portal needs from GET /v2/worlds/by-url. The images are CDN-relative paths.</summary>
+    [Serializable]
+    internal class SpaceWorld
+    {
+        public string worlds_id;
+        public string name;
+        public string image_url;
+        public string banner_url;
+    }
+
     [Serializable]
     public class MetaData
     {
@@ -308,32 +318,61 @@ namespace BS
             }
         }
 
+        /// <summary>
+        /// The name and image for the space at <paramref name="url"/>: the world that lives there, else the group
+        /// that owns the address, else the page's own meta tags. Null when nothing answers.
+        /// </summary>
         public static async Task<Community> SpaceMeta(string url)
         {
+            if (string.IsNullOrEmpty(url)) return null;
             if (url.Contains("?"))
                 url = url.Split('?')[0];
+            var api = GetUrl(EnvType.PROD, UrlType.API);
+            var escaped = UnityWebRequest.EscapeURL(url);
+
+            // Worlds no longer belong to groups, so the world itself is the first place to look.
+            try
+            {
+                var world = JsonUtility.FromJson<SpaceWorld>(await Text(api + "/v2/worlds/by-url?space_url=" + escaped));
+                if (world != null && !string.IsNullOrEmpty(world.name))
+                    return new Community
+                    {
+                        name = world.name,
+                        icon = Cdn(string.IsNullOrEmpty(world.image_url) ? world.banner_url : world.image_url),
+                    };
+            }
+            catch (Exception) { }
 
             try
             {
-                var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + "/v2/communities/space-info?space_url=" + UnityWebRequest.EscapeURL(url));
                 // TODO: Grab Event if Event is live?
-                // This cant really work as the events can have any url now? So the space may not be the same as the event destination? 
+                // This cant really work as the events can have any url now? So the space may not be the same as the event destination?
                 // https://api.sidetestvr.com/v2/communities/557/events
-                return JsonUtility.FromJson<Community>(text);
+                var community = JsonUtility.FromJson<Community>(await Text(api + "/v2/communities/space-info?space_url=" + escaped));
+                if (community != null && !string.IsNullOrEmpty(community.name))
+                    return community;
+            }
+            catch (Exception) { }
+
+            try
+            {
+                var space = JsonUtility.FromJson<MetaData>(await Text(api + "/v2/urlmetadata?url=" + escaped));
+                return space == null ? null : new Community { name = space.title, icon = space.image };
             }
             catch (Exception)
             {
-                try
-                {
-                    var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + "/v2/urlmetadata?url=" + UnityWebRequest.EscapeURL(url));
-                    var space = JsonUtility.FromJson<MetaData>(text);
-                    return new Community { name = space.title, icon = space.image };
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
+                return null;
             }
+        }
+
+        /// <summary>A stored CDN-relative path as a full CDN url. Full urls pass through; legacy "/assets/..." paths 404 on the CDN, so they give null.</summary>
+        internal static string Cdn(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return null;
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return path;
+            if (path.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase)) return null;
+            return GetUrl(EnvType.PROD, UrlType.CDN) + "/" + path.TrimStart('/');
         }
         public static async Task<SqAvatar> AvatarDetails(long avatarId)
         {

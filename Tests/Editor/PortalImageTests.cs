@@ -21,5 +21,22 @@ namespace BS.SDKEditor.Tests
         [TestCase("not a url")]
         [TestCase("")]
         public void AnythingElse_IsLeftAlone(string url) => Assert.AreEqual(url, BSPortal.Sized(url, 512));
+
+        // World images come back from /v2/worlds/by-url as CDN-relative paths.
+        [Test]
+        public void AWorldImagePath_BecomesACdnUrl() =>
+            Assert.AreEqual("https://cdn.sidequestvr.com/file/4885846/card.png", Get.Cdn("file/4885846/card.png"));
+
+        [Test]
+        public void AWorldImagePath_WithALeadingSlash_BecomesACdnUrl() =>
+            Assert.AreEqual("https://cdn.sidequestvr.com/file/4885846/card.png", Get.Cdn("/file/4885846/card.png"));
+
+        [Test]
+        public void AFullUrl_PassesThrough() => Assert.AreEqual("https://example.com/a.png", Get.Cdn("https://example.com/a.png"));
+
+        [TestCase("/assets/images/old.png")]
+        [TestCase("")]
+        [TestCase(null)]
+        public void NoUsableImage_GivesNull(string path) => Assert.IsNull(Get.Cdn(path));
     }
 }
