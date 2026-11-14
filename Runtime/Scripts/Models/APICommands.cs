@@ -229,4 +229,9 @@ public class APICommands
 
     // BS.Assets: op§field§..., answered with JSON (BSAssetRequests).
     public const string ASSET_DATABASE = "!adb!";
+
+    // Player events, Unity -> page. A pointer moved onto or off UI: isOverUI§side. The local player was
+    // teleported (a respawn, a portal, a script): px§py§pz§rx§ry§rz§isSpawn.
+    public const string POINTER_OVER_UI = "pou!";
+    public const string PLAYER_TELEPORTED = "ptp!";
 }

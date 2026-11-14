@@ -19,6 +19,12 @@ namespace BS
     [AddComponentMenu("BS/Feed Monitor")]
     public class BSFeedMonitor : MonoBehaviour
     {
+        /// <summary>Client hook: raised as each one is enabled, so the client takes up monitors as they arrive instead
+        /// of searching the scene for them.</summary>
+        public static event System.Action<BSFeedMonitor> Enabled;
+
+        void OnEnable() => Enabled?.Invoke(this);
+
         [Tooltip("The BSCameraFeed id to show, or \"program\" / \"preview\" for the newsroom buses.")]
         public string feedId = "program";
 

@@ -14,7 +14,6 @@ namespace BS.SDKEditor
             if (target is BSColliderEvents)
             {
                 var script = (BSColliderEvents)target;
-                // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
         }
@@ -23,23 +22,11 @@ namespace BS.SDKEditor
         {
             var script = (BSColliderEvents)target;
             Editor editor = Editor.CreateEditor(script);
-            // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
-            VisualElement myInspector = new VisualElement();
 
-            var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
-            myInspector.styleSheets.Add(_mainWindowStyleSheet);
-
-
-            //#if GREENFIELD_PROJECT
-            var foldout = new Foldout();
-            foldout.text = "Available Properties";
-            IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
-            foldout.value = false;
-            foldout.Add(inspectorIMGUI);
-            myInspector.Add(foldout);
-            //#endif
-
-            return myInspector;
+            return BSComponentInspector.Build(
+                editor,
+                new string[] {  },
+                new string[] {  });
         }
     }
 }

@@ -32,6 +32,14 @@
       { "sig": "Url.get", "name": "Url", "kind": "get", "returns": "System.String", "params": [] },
       { "sig": "Url.set", "name": "Url", "kind": "set", "returns": "System.Void", "params": [{ "name": "value", "type": "System.String" }] }
     ] },
+    "BS.BSGrantXP": { "assembly": "BS.SDK", "base": "UnityEngine.MonoBehaviour", "kind": "class", "members": [
+      { "sig": "EventKey.get", "name": "EventKey", "kind": "get", "returns": "System.String", "params": [] },
+      { "sig": "EventKey.set", "name": "EventKey", "kind": "set", "returns": "System.Void", "params": [{ "name": "value", "type": "System.String" }] },
+      { "sig": "Grant()", "name": "Grant", "kind": "method", "returns": "System.Void", "params": [] },
+      { "sig": "GrantKey(System.String)", "name": "GrantKey", "kind": "method", "returns": "System.Void", "params": [{ "name": "key", "type": "System.String" }] },
+      { "sig": "IsValidKey(System.String)", "name": "IsValidKey", "kind": "method", "static": true, "returns": "System.Boolean", "params": [{ "name": "key", "type": "System.String" }] },
+      { "sig": "KeyIsValid.get", "name": "KeyIsValid", "kind": "get", "returns": "System.Boolean", "params": [] }
+    ] },
     "TMPro.TMP_Text": { "assembly": "Unity.TextMeshPro", "base": "UnityEngine.UI.MaskableGraphic", "kind": "class", "members": [
       { "sig": "ClearMesh()", "name": "ClearMesh", "kind": "method", "returns": "System.Void", "params": [] },
       { "sig": "ClearMesh(System.Boolean)", "name": "ClearMesh", "kind": "method", "returns": "System.Void", "params": [{ "name": "uploadGeometry", "type": "System.Boolean" }] },

@@ -42,7 +42,7 @@ namespace BS.BridgeApi
         /// <summary>The members, by id. Gaps are retired or never-used ids.</summary>
         public static BridgeMember[] Build()
         {
-            var t = new BridgeMember[790];
+            var t = new BridgeMember[795];
             t[1] = new BridgeMember(1, BridgeTier.Read, false, false, 0, "", 1, T1);
             t[2] = new BridgeMember(2, BridgeTier.Read, false, false, 0, "", 3, T2);
             t[3] = new BridgeMember(3, BridgeTier.Read, false, false, 0, "", 3, T3);
@@ -832,13 +832,18 @@ namespace BS.BridgeApi
             t[787] = new BridgeMember(787, BridgeTier.Read, false, false, 0, "", 33, T787);
             t[788] = new BridgeMember(788, BridgeTier.Read, false, false, 0, "", 33, T788);
             t[789] = new BridgeMember(789, BridgeTier.Read, false, false, 0, "", 33, T789);
+            t[790] = new BridgeMember(790, BridgeTier.Read, false, false, 0, "", 34, T790);
+            t[791] = new BridgeMember(791, BridgeTier.Write, false, false, 1, "s", 34, T791);
+            t[792] = new BridgeMember(792, BridgeTier.Read, false, false, 0, "", 34, T792);
+            t[793] = new BridgeMember(793, BridgeTier.Write, false, false, 0, "", 34, T793);
+            t[794] = new BridgeMember(794, BridgeTier.Write, false, false, 1, "s", 34, T794);
             return t;
         }
 
         /// <summary>The types a handle can show as, by id.</summary>
         public static Type[] BuildTypes()
         {
-            var t = new Type[34];
+            var t = new Type[35];
             t[1] = typeof(UnityEngine.Object);
             t[2] = typeof(UnityEngine.GameObject);
             t[3] = typeof(UnityEngine.Component);
@@ -870,13 +875,14 @@ namespace BS.BridgeApi
             t[31] = typeof(TMPro.TMP_Text);
             t[32] = typeof(UnityEngine.MonoBehaviour);
             t[33] = typeof(BS.BSAudioStream);
+            t[34] = typeof(BS.BSGrantXP);
             return t;
         }
 
         /// <summary>The classes a page may ask an object for, by id. Abstract types are not among them.</summary>
         public static Type[] BuildComponentTypes()
         {
-            var t = new Type[34];
+            var t = new Type[35];
             t[5] = typeof(UnityEngine.Transform);
             t[6] = typeof(UnityEngine.Rigidbody);
             t[7] = typeof(UnityEngine.Collider);
@@ -902,6 +908,7 @@ namespace BS.BridgeApi
             t[30] = typeof(UnityEngine.AI.NavMeshAgent);
             t[31] = typeof(TMPro.TMP_Text);
             t[33] = typeof(BS.BSAudioStream);
+            t[34] = typeof(BS.BSGrantXP);
             return t;
         }
 
@@ -1678,5 +1685,10 @@ namespace BS.BridgeApi
         static void T787(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetDouble(self.BufferedSeconds); }
         static void T788(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetString(self.FailureReason); }
         static void T789(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetInt(BridgeApiCurated.AudioStream_GetUnderruns(self)); }
+        static void T790(BridgeCallContext c) { var self = c.SelfAs<BS.BSGrantXP>(); if (c.Failed) return; c.RetString(self.EventKey); }
+        static void T791(BridgeCallContext c) { var self = c.SelfAs<BS.BSGrantXP>(); var a0 = c.Str(0); c.RangeLength(0, 64); if (c.Failed) return; self.EventKey = a0; }
+        static void T792(BridgeCallContext c) { var self = c.SelfAs<BS.BSGrantXP>(); if (c.Failed) return; c.RetBool(self.KeyIsValid); }
+        static void T793(BridgeCallContext c) { var self = c.SelfAs<BS.BSGrantXP>(); if (c.Failed) return; self.Grant(); }
+        static void T794(BridgeCallContext c) { var self = c.SelfAs<BS.BSGrantXP>(); var a0 = c.Str(0); c.RangeLength(0, 64); if (c.Failed) return; self.GrantKey(a0); }
     }
 }

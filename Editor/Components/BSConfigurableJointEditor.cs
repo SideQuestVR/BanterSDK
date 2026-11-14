@@ -14,7 +14,6 @@ namespace BS.SDKEditor
             if (target is BSConfigurableJoint)
             {
                 var script = (BSConfigurableJoint)target;
-                // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
         }
@@ -23,34 +22,11 @@ namespace BS.SDKEditor
         {
             var script = (BSConfigurableJoint)target;
             Editor editor = Editor.CreateEditor(script);
-            // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
-            VisualElement myInspector = new VisualElement();
 
-            var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
-            myInspector.styleSheets.Add(_mainWindowStyleSheet);
-
-            var title = new Label("PROPERTIES SEEN BY JS");
-            title.style.fontSize = 14;
-            myInspector.Add(title);
-            var seeFields = new Label("targetPosition, autoConfigureConnectedAnchor, xMotion, yMotion, zMotion, angularXMotion, angularYMotion, angularZMotion, anchor, axis, secondaryAxis, connectedAnchor, targetRotation, targetVelocity, targetAngularVelocity, enableCollision, enablePreprocessing, breakForce, breakTorque, connectedMassScale, massScale, rotationDriveMode, configuredInWorldSpace, swapBodies, connectedBody, linearLimit, lowAngularXLimit, highAngularXLimit, angularYLimit, angularZLimit, xDrive, yDrive, zDrive, angularXDrive, angularYZDrive, slerpDrive, ");
-            seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
-            seeFields.style.flexWrap = Wrap.Wrap;
-            seeFields.style.whiteSpace = WhiteSpace.Normal;
-            seeFields.style.marginBottom = 10;
-            seeFields.style.marginTop = 10;
-            seeFields.style.color = Color.gray;
-            myInspector.Add(seeFields);
-
-            //#if GREENFIELD_PROJECT
-            var foldout = new Foldout();
-            foldout.text = "Available Properties";
-            IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
-            foldout.value = false;
-            foldout.Add(inspectorIMGUI);
-            myInspector.Add(foldout);
-            //#endif
-
-            return myInspector;
+            return BSComponentInspector.Build(
+                editor,
+                new string[] { "targetPosition", "autoConfigureConnectedAnchor", "xMotion", "yMotion", "zMotion", "angularXMotion", "angularYMotion", "angularZMotion", "anchor", "axis", "secondaryAxis", "connectedAnchor", "targetRotation", "targetVelocity", "targetAngularVelocity", "enableCollision", "enablePreprocessing", "breakForce", "breakTorque", "connectedMassScale", "massScale", "rotationDriveMode", "configuredInWorldSpace", "swapBodies", "connectedBody", "linearLimit", "lowAngularXLimit", "highAngularXLimit", "angularYLimit", "angularZLimit", "xDrive", "yDrive", "zDrive", "angularXDrive", "angularYZDrive", "slerpDrive" },
+                new string[] {  });
         }
     }
 }

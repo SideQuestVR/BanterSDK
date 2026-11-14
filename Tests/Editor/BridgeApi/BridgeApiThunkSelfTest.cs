@@ -46,7 +46,7 @@ namespace BS.BridgeApi.Tests
             {
                 physics, scene, f.Add("particles", typeof(ParticleSystem)), f.Add("line", typeof(LineRenderer)), f.Add("trail", typeof(TrailRenderer)),
                 f.Add("skin", typeof(SkinnedMeshRenderer)), f.Add("agent", typeof(NavMeshAgent)), f.Add("text", typeof(TextMeshPro)),
-                f.Add("stream", typeof(BSAudioStream)),
+                f.Add("stream", typeof(BSAudioStream)), f.Add("grantxp", typeof(BSGrantXP)),
             };
             for (int id = 1; id < types.Length; id++)
             {

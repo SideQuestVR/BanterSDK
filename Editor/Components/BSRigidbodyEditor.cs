@@ -14,7 +14,6 @@ namespace BS.SDKEditor
             if (target is BSRigidbody)
             {
                 var script = (BSRigidbody)target;
-                // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
         }
@@ -23,26 +22,12 @@ namespace BS.SDKEditor
         {
             var script = (BSRigidbody)target;
             Editor editor = Editor.CreateEditor(script);
-            // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
-            VisualElement myInspector = new VisualElement();
 
-            var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
-            myInspector.styleSheets.Add(_mainWindowStyleSheet);
-
-            var title = new Label("PROPERTIES SEEN BY JS");
-            title.style.fontSize = 14;
-            myInspector.Add(title);
-            var seeFields = new Label("mass, drag, angularDrag, isKinematic, useGravity, centerOfMass, collisionDetectionMode, freezePositionX, freezePositionY, freezePositionZ, freezeRotationX, freezeRotationY, freezeRotationZ, ");
-            seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
-            seeFields.style.flexWrap = Wrap.Wrap;
-            seeFields.style.whiteSpace = WhiteSpace.Normal;
-            seeFields.style.marginBottom = 10;
-            seeFields.style.marginTop = 10;
-            seeFields.style.color = Color.gray;
-            myInspector.Add(seeFields);
+            var syncSection = new VisualElement();
             var titleSynced = new Label("SYNC RIGIDBODY TO JS");
             titleSynced.style.fontSize = 14;
-            myInspector.Add(titleSynced);
+            syncSection.Add(titleSynced);
+
             var containervelocity = new VisualElement();
             containervelocity.AddToClassList("toggle-container");
             var labelvelocity = new Label("velocity");
@@ -57,7 +42,8 @@ namespace BS.SDKEditor
                 EditorUtility.SetDirty(script);
             });
             containervelocity.Add(togglevelocity);
-            myInspector.Add(containervelocity);
+            syncSection.Add(containervelocity);
+
             var containerangularVelocity = new VisualElement();
             containerangularVelocity.AddToClassList("toggle-container");
             var labelangularVelocity = new Label("angularVelocity");
@@ -72,18 +58,12 @@ namespace BS.SDKEditor
                 EditorUtility.SetDirty(script);
             });
             containerangularVelocity.Add(toggleangularVelocity);
-            myInspector.Add(containerangularVelocity);
+            syncSection.Add(containerangularVelocity);
 
-            //#if GREENFIELD_PROJECT
-            var foldout = new Foldout();
-            foldout.text = "Available Properties";
-            IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
-            foldout.value = false;
-            foldout.Add(inspectorIMGUI);
-            myInspector.Add(foldout);
-            //#endif
-
-            return myInspector;
+            return BSComponentInspector.Build(
+                editor,
+                new string[] { "mass", "drag", "angularDrag", "isKinematic", "useGravity", "centerOfMass", "collisionDetectionMode", "freezePositionX", "freezePositionY", "freezePositionZ", "freezeRotationX", "freezeRotationY", "freezeRotationZ" },
+                new string[] { "velocity", "angularVelocity" }, syncSection);
         }
     }
 }

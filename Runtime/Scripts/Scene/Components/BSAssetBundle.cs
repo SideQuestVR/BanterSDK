@@ -529,14 +529,34 @@ namespace BS
             }
             if (isScene && !string.IsNullOrEmpty(url))
             {
-                byte[] head = await Get.PeekHeader(url, 8);
+                // One failed peek used to mean a raw load. For a .bee world that downloads the encrypted file as a raw
+                // bundle, which the content check refuses and Unity cannot read, and the player sits on the failure screen
+                // (seen on Quest Wi-Fi: a stalled 8-byte request, then the same file downloading fine). So: a world this
+                // device already holds as a .bee takes the .bee path, which serves its cached copy when the server can't
+                // be reached; any other world gets the peek again before the raw fallback.
+                byte[] head = await Get.PeekHeader(url, 8, PeekTimeoutSeconds);
+                bool cachedBee = false;
+                for (var attempt = 2; head == null && attempt <= PeekAttempts && !cancellation.IsCancellationRequested; attempt++)
+                {
+                    if (attempt == 2 && (await BasisLoadHandler.IsMetaDataOnDiscAsync(url)).found)
+                    {
+                        cachedBee = true;
+                        break;
+                    }
+                    Debug.LogWarning($"[Greenfield/BEE] Header peek for {url} failed; attempt {attempt} of {PeekAttempts}.");
+                    await Task.Delay(TimeSpan.FromSeconds(attempt - 1));
+                    if (cancellation.IsCancellationRequested) break;
+                    head = await Get.PeekHeader(url, 8, PeekTimeoutSeconds);
+                }
                 bool looksUnity = head != null && LooksLikeUnityBundle(head);
                 Debug.Log($"[Greenfield/BEE] Bundle sniff for {url}: " +
                           (head == null
-                              ? "header peek FAILED (null) — falling back to raw AssetBundle load."
+                              ? (cachedBee
+                                  ? "header peek FAILED, cached here as a .bee → Basis encrypted (.bee) path (serves the cached copy if the server stays unreachable)."
+                                  : $"header peek FAILED {PeekAttempts} times — falling back to raw AssetBundle load.")
                               : $"header=[{DescribeHeader(head)}], looksLikeUnity={looksUnity} → " +
                                 (looksUnity ? "raw AssetBundle load." : "Basis encrypted (.bee) decrypt.")));
-                if (head != null && !looksUnity)
+                if ((head != null && !looksUnity) || cachedBee)
                 {
                     // A world is published to a static url, so the cache cannot tell "same address,
                     // new bytes" from "same address, same bytes" on its own — without a version tag
@@ -591,6 +611,10 @@ namespace BS
 
         /// <summary>How many rounds of waiting a load may go through before it gives up (each starts a frame later).</summary>
         internal const int MaxLoadPasses = 1000;
+
+        /// <summary>A scene bundle's header peek: tries before the raw fallback, and each try's timeout (8 bytes from the CDN).</summary>
+        internal const int PeekAttempts = 3;
+        internal const int PeekTimeoutSeconds = 10;
 
         /// <summary>Completes when an Unload cancels the load <paramref name="cancel"/> belongs to; never, when there is none.</summary>
         static Task WhenCancelled(System.Threading.CancellationTokenSource cancel)
@@ -730,6 +754,11 @@ namespace BS
                 // rendering was project configuration (BRG stripping + URP pipeline
                 // asset settings), not shader incompatibility.
 
+#if !UNITY_EDITOR
+                var walkClock = System.Diagnostics.Stopwatch.StartNew();
+                var walked = 0;
+                var walkFrame = Time.frameCount;
+#endif
                 foreach (GameObject thisgo in reference.GetRootGameObjects())
                 {
                     foreach (Transform transform in thisgo.GetComponentsInChildren<Transform>(true))
@@ -803,8 +832,16 @@ namespace BS
                         }
 
                         BSText.RepairFont(transform.gameObject.GetComponent<TMP_Text>());
+#if !UNITY_EDITOR
+                        walked++;
+#endif
                     }
                 }
+#if !UNITY_EDITOR
+                Debug.Log("[LoadTiming] world setup walk over " + walked + " objects: "
+                          + walkClock.Elapsed.TotalMilliseconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)
+                          + " ms (frame " + walkFrame + ").");
+#endif
             }
         }
 

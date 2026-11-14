@@ -14,7 +14,6 @@ namespace BS.SDKEditor
             if (target is BSVideoPlayer)
             {
                 var script = (BSVideoPlayer)target;
-                // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
         }
@@ -23,26 +22,12 @@ namespace BS.SDKEditor
         {
             var script = (BSVideoPlayer)target;
             Editor editor = Editor.CreateEditor(script);
-            // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
-            VisualElement myInspector = new VisualElement();
 
-            var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
-            myInspector.styleSheets.Add(_mainWindowStyleSheet);
-
-            var title = new Label("PROPERTIES SEEN BY JS");
-            title.style.fontSize = 14;
-            myInspector.Add(title);
-            var seeFields = new Label("url, volume, loop, playOnAwake, skipOnDrop, waitForFirstFrame, isPlaying, isLooping, isPrepared, isMuted, duration, ");
-            seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
-            seeFields.style.flexWrap = Wrap.Wrap;
-            seeFields.style.whiteSpace = WhiteSpace.Normal;
-            seeFields.style.marginBottom = 10;
-            seeFields.style.marginTop = 10;
-            seeFields.style.color = Color.gray;
-            myInspector.Add(seeFields);
+            var syncSection = new VisualElement();
             var titleSynced = new Label("SYNC VIDEOPLAYER TO JS");
             titleSynced.style.fontSize = 14;
-            myInspector.Add(titleSynced);
+            syncSection.Add(titleSynced);
+
             var containertime = new VisualElement();
             containertime.AddToClassList("toggle-container");
             var labeltime = new Label("time");
@@ -57,18 +42,12 @@ namespace BS.SDKEditor
                 EditorUtility.SetDirty(script);
             });
             containertime.Add(toggletime);
-            myInspector.Add(containertime);
+            syncSection.Add(containertime);
 
-            //#if GREENFIELD_PROJECT
-            var foldout = new Foldout();
-            foldout.text = "Available Properties";
-            IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
-            foldout.value = false;
-            foldout.Add(inspectorIMGUI);
-            myInspector.Add(foldout);
-            //#endif
-
-            return myInspector;
+            return BSComponentInspector.Build(
+                editor,
+                new string[] { "url", "volume", "loop", "playOnAwake", "skipOnDrop", "waitForFirstFrame", "isPlaying", "isLooping", "isPrepared", "isMuted", "duration" },
+                new string[] { "time" }, syncSection);
         }
     }
 }

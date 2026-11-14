@@ -34,7 +34,8 @@
     {"id": 30, "name": "UnityEngine.AI.NavMeshAgent", "component": true},
     {"id": 31, "name": "TMPro.TMP_Text", "component": true},
     {"id": 32, "name": "UnityEngine.MonoBehaviour", "abstract": true},
-    {"id": 33, "name": "BS.BSAudioStream", "js": "AudioStream", "component": true}
+    {"id": 33, "name": "BS.BSAudioStream", "js": "AudioStream", "component": true},
+    {"id": 34, "name": "BS.BSGrantXP", "js": "GrantXP", "component": true}
   ],
   "members": [
     {"id": 1, "sig": "UnityEngine.Object.name.get", "tier": "T0"},
@@ -825,6 +826,11 @@
     {"id": 786, "sig": "BS.BSAudioStream.SampleRate.get", "tier": "T0"},
     {"id": 787, "sig": "BS.BSAudioStream.BufferedSeconds.get", "tier": "T0"},
     {"id": 788, "sig": "BS.BSAudioStream.FailureReason.get", "tier": "T0"},
-    {"id": 789, "curated": "AudioStream_GetUnderruns", "on": "BS.BSAudioStream", "js": "GetUnderruns", "params": [], "tier": "T0", "returns": "System.Int32"}
+    {"id": 789, "curated": "AudioStream_GetUnderruns", "on": "BS.BSAudioStream", "js": "GetUnderruns", "params": [], "tier": "T0", "returns": "System.Int32"},
+    {"id": 790, "sig": "BS.BSGrantXP.EventKey.get", "tier": "T0"},
+    {"id": 791, "sig": "BS.BSGrantXP.EventKey.set", "tier": "T1", "ranges": {"0": [64]}},
+    {"id": 792, "sig": "BS.BSGrantXP.KeyIsValid.get", "tier": "T0"},
+    {"id": 793, "sig": "BS.BSGrantXP.Grant()", "tier": "T1"},
+    {"id": 794, "sig": "BS.BSGrantXP.GrantKey(System.String)", "tier": "T1", "ranges": {"0": [64]}}
   ]
 }

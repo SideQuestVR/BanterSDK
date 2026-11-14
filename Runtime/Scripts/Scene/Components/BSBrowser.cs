@@ -256,42 +256,61 @@ namespace BS
         }
 
         /// <summary>
-        /// The speakers Ora's audio emitter built for this browser's view. They're its children, each with an
-        /// OraSpeakerFilter pointing back at it, so they're looked for again whenever its children change or one of
-        /// them is gone.
+        /// The speakers Ora's audio emitter built for this browser's view, as the emitter lists them
+        /// (<see cref="OraAudioEmitter.ManagedSpeakers"/>; they may carry an OraSpeakerGenerator or an OraSpeakerFilter, so
+        /// they're not looked for by component). They're taken again whenever that list changes or one of them is gone.
         /// </summary>
         internal sealed class SpeakerTracker
         {
             OraAudioEmitter _emitter;
-            int _childCount = -1;
-            readonly List<OraSpeakerFilter> _filters = new List<OraSpeakerFilter>();
             internal readonly List<AudioSource> Speakers = new List<AudioSource>();
 
-            /// <summary>Looks for the speakers again when they may have changed. True when it found any.</summary>
-            internal bool Refresh(OraAudioEmitter emitter)
+            /// <summary>Takes the speakers again when they may have changed. True when it found any.</summary>
+            internal bool Refresh(OraAudioEmitter emitter) => Refresh(emitter, emitter != null ? emitter.ManagedSpeakers : null);
+
+            /// <summary>
+            /// <see cref="Refresh(OraAudioEmitter)"/> with the emitter's speaker list given (<paramref name="speakers"/>:
+            /// its Managed speakers; tests pass their own).
+            /// </summary>
+            internal bool Refresh(OraAudioEmitter emitter, IReadOnlyList<AudioSource> speakers)
             {
                 // Only the speakers Ora builds itself. A Custom emitter plays through AudioSources someone set up
                 // on purpose (Greenfield's streaming browser has its own fade), and Ora leaves those alone too.
-                if (emitter != null && emitter.speakerMode != OraSpeakerMode.Managed)
+                if (emitter == null || emitter.speakerMode != OraSpeakerMode.Managed)
+                {
                     emitter = null;
-                int childCount = emitter != null ? emitter.transform.childCount : -1;
-                if (emitter == _emitter && childCount == _childCount && !AnyGone())
+                    speakers = null;
+                }
+                if (emitter == _emitter && Holds(speakers) && !AnyGone())
                     return false;
                 _emitter = emitter;
-                _childCount = childCount;
                 Speakers.Clear();
-                if (emitter == null)
+                if (speakers == null)
                     return false;
-                emitter.GetComponentsInChildren(true, _filters);
-                foreach (var filter in _filters)
-                {
-                    if (filter.emitter != emitter)
-                        continue;
-                    var speaker = filter.GetComponent<AudioSource>();
-                    if (speaker != null)
-                        Speakers.Add(speaker);
-                }
+                for (int i = 0; i < speakers.Count; i++)
+                    if (speakers[i] != null)
+                        Speakers.Add(speakers[i]);
                 return Speakers.Count > 0;
+            }
+
+            // Whether Speakers is exactly the live entries of the list, in order (an empty list when there is none).
+            // Runs every frame: indexes the list rather than enumerating it, which would allocate.
+            bool Holds(IReadOnlyList<AudioSource> speakers)
+            {
+                int held = 0;
+                if (speakers != null)
+                {
+                    for (int i = 0; i < speakers.Count; i++)
+                    {
+                        var speaker = speakers[i];
+                        if (speaker == null)
+                            continue;
+                        if (held >= Speakers.Count || !ReferenceEquals(speaker, Speakers[held]))
+                            return false;
+                        held++;
+                    }
+                }
+                return held == Speakers.Count;
             }
 
             bool AnyGone()
